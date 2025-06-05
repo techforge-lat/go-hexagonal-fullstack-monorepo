@@ -1,0 +1,181 @@
+package valid
+
+import (
+	"encoding/json"
+	"reflect"
+)
+
+type ObjectSchema struct {
+	baseSchema
+	fields map[string]Schema
+}
+
+func Object(fields map[string]Schema) *ObjectSchema {
+	return &ObjectSchema{
+		baseSchema: baseSchema{},
+		fields:     fields,
+	}
+}
+
+func (o *ObjectSchema) Parse(value interface{}) *Result {
+	return o.parseWithPath(value, "")
+}
+
+func (o *ObjectSchema) parseWithPath(value interface{}, path string) *Result {
+	if o.optional && isNilOrEmpty(value) {
+		return newResult(true, value, nil)
+	}
+
+	if errors := o.validateRequired(value, path); len(errors) > 0 {
+		return newResult(false, nil, errors)
+	}
+
+	if isNilOrEmpty(value) && !o.required {
+		return newResult(true, value, nil)
+	}
+
+	data, err := convertToMap(value)
+	if err != nil {
+		return newResult(false, nil, []ValidationError{{
+			Path:    path,
+			Message: getMessage(msgs.TypeObject),
+			Code:    "type_error",
+		}})
+	}
+
+	var allErrors []ValidationError
+	validatedData := make(map[string]interface{})
+
+	for fieldName, fieldSchema := range o.fields {
+		fieldValue, exists := data[fieldName]
+		fieldPath := fieldName
+		if path != "" {
+			fieldPath = path + "." + fieldName
+		}
+
+		var result *Result
+		if stringSchema, ok := fieldSchema.(*StringSchema); ok {
+			result = stringSchema.parseWithPath(fieldValue, fieldPath)
+		} else if numberSchema, ok := fieldSchema.(*NumberSchema); ok {
+			result = numberSchema.parseWithPath(fieldValue, fieldPath)
+		} else if objectSchema, ok := fieldSchema.(*ObjectSchema); ok {
+			result = objectSchema.parseWithPath(fieldValue, fieldPath)
+		} else if arraySchema, ok := fieldSchema.(*ArraySchema); ok {
+			result = arraySchema.parseWithPath(fieldValue, fieldPath)
+		} else {
+			result = fieldSchema.Parse(fieldValue)
+			if len(result.Errors) > 0 {
+				result.Errors = addPathPrefix(result.Errors, fieldPath)
+			}
+		}
+
+		if result.HasErrors() {
+			allErrors = append(allErrors, result.Errors...)
+		} else if exists || result.Data != nil {
+			validatedData[fieldName] = result.Data
+		}
+	}
+
+	errors := append(allErrors, o.validateCustom(validatedData, path)...)
+
+	if len(errors) > 0 {
+		return newResult(false, nil, errors)
+	}
+
+	return newResult(true, validatedData, nil)
+}
+
+func (o *ObjectSchema) Optional() Schema {
+	o.baseSchema.setOptional()
+	return o
+}
+
+func (o *ObjectSchema) Required() Schema {
+	o.baseSchema.setRequired()
+	return o
+}
+
+func (o *ObjectSchema) Custom(fn CustomValidatorFunc) Schema {
+	o.baseSchema.addCustom(fn)
+	return o
+}
+
+func convertToMap(value interface{}) (map[string]interface{}, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	switch v := value.(type) {
+	case map[string]interface{}:
+		return v, nil
+	case map[string]string:
+		result := make(map[string]interface{})
+		for k, val := range v {
+			result[k] = val
+		}
+		return result, nil
+	default:
+		val := reflect.ValueOf(value)
+		if val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				return nil, nil
+			}
+			val = val.Elem()
+		}
+
+		if val.Kind() == reflect.Struct {
+			return structToMap(value)
+		}
+
+		jsonBytes, err := json.Marshal(value)
+		if err != nil {
+			return nil, err
+		}
+
+		var result map[string]interface{}
+		err = json.Unmarshal(jsonBytes, &result)
+		return result, err
+	}
+}
+
+func structToMap(value interface{}) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	val := reflect.ValueOf(value)
+	
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		return nil, json.NewEncoder(nil).Encode(value)
+	}
+
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldValue := val.Field(i)
+
+		if !fieldValue.CanInterface() {
+			continue
+		}
+
+		jsonTag := field.Tag.Get("json")
+		fieldName := field.Name
+		
+		if jsonTag != "" && jsonTag != "-" {
+			if commaIndex := len(jsonTag); commaIndex > 0 {
+				for j, r := range jsonTag {
+					if r == ',' {
+						commaIndex = j
+						break
+					}
+				}
+				fieldName = jsonTag[:commaIndex]
+			}
+		}
+
+		result[fieldName] = fieldValue.Interface()
+	}
+
+	return result, nil
+}
