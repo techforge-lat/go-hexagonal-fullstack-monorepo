@@ -6,14 +6,7 @@ import (
 
 // SetAPIRoutes configures all API routes for the server
 func SetAPIRoutes(srv *server.Server) error {
-	// The server already adds /api/v1/health endpoint automatically
-	// No additional routes needed
-	return nil
-}
+	srv.API.GET("/health", srv.HealthCheckController)
 
-// SetStatelessAPIRoutes configures API routes that don't require database
-func SetStatelessAPIRoutes(srv *server.Server) error {
-	// The server already adds /api/v1/health endpoint automatically
-	// No additional routes needed
 	return nil
 }

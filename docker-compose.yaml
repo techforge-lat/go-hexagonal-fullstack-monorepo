@@ -1,0 +1,91 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: go-hexagonal-fullstack-monorepo_database
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./database/seed/create_database.sql:/docker-entrypoint-initdb.d/create_database.sql
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: go-hexagonal-fullstack-monorepo_pgadmin
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.81.0
+    container_name: go-hexagonal-fullstack-monorepo_collector
+    restart: always
+    command: ["--config=/etc/collector.yaml"]
+    ports:
+      - "4318:4318"
+      - "4317:4317"
+    volumes:
+      - ./devops/otel/otel-collector-config.yml:/etc/collector.yaml
+    depends_on:
+      - tempo
+  tempo:
+    image: grafana/tempo:latest
+    container_name: go-hexagonal-fullstack-monorepo_tempo
+    restart: always
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./devops/tempo/tempo.yaml:/etc/tempo.yaml
+  grafana:
+    image: grafana/grafana:latest
+    container_name: go-hexagonal-fullstack-monorepo_grafana
+    restart: always
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./devops/grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    depends_on:
+      - collector
+      - tempo
+      - loki
+  loki:
+    image: grafana/loki:latest
+    container_name: go-hexagonal-fullstack-monorepo_loki
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./devops/loki/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: go-hexagonal-fullstack-monorepo_promtail
+    restart: always
+    volumes:
+      - ./devops/promtail/config.yaml:/etc/promtail/config.yaml
+      - ./logs/app.log:/var/log/scala-erp.log
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+volumes:
+  database:
+    driver: local
+  pgadmin:
+    driver: local
+  loki:
+    driver: local
+  images:
+    driver: local
+networks:
+  default:
+    name: go-hexagonal-fullstack-monorepo
