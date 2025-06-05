@@ -1,11 +1,10 @@
 package server
 
 import (
+	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 )
 
 func TestNew(t *testing.T) {
@@ -111,77 +110,5 @@ func TestHealthCheckController(t *testing.T) {
 	// The response should be either 200 (healthy) or 503 (service unavailable)
 	if rec.Code != http.StatusOK && rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("expected status 200 or 503, got %d", rec.Code)
-	}
-}
-
-func TestNewWithDatabase(t *testing.T) {
-	config := &localconfig.Config{
-		Database: localconfig.DatabaseConfig{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "test",
-			Password: "test",
-			DBName:   "test",
-			SSLMode:  "disable",
-		},
-		HTTP: localconfig.HTTPConfig{
-			Port:           8080,
-			AllowedOrigins: []string{"*"},
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		},
-		JWT: localconfig.JWTConfig{
-			Secret: "test-secret",
-		},
-		Logger: localconfig.LoggerConfig{
-			Level:     "info",
-			Format:    "text",
-			AddSource: false,
-		},
-		OTEL: localconfig.OTELConfig{
-			CollectorEndpoint: "localhost:4318",
-			Environment:       "test",
-		},
-	}
-
-	// Test with database dependency injection (will fail if database not available)
-	database, dbErr := NewDatabase(config.Database)
-	if dbErr != nil {
-		t.Logf("Database connection failed (expected in test environment): %v", dbErr)
-		// Test without database
-		server, err := New("test-service", config, nil)
-		if err != nil {
-			t.Fatalf("expected server to be created without database, got error: %v", err)
-		}
-		if server.Database != nil {
-			t.Error("expected database to be nil when not provided")
-		}
-		return
-	}
-
-	// Test with successful database injection
-	server, err := New("test-service", config, database)
-	if err != nil {
-		t.Fatalf("expected server to be created with database, got error: %v", err)
-	}
-
-	if server.Database == nil {
-		t.Error("expected database to be injected")
-	}
-}
-
-func TestNewDatabase(t *testing.T) {
-	config := localconfig.DatabaseConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "test",
-		Password: "test",
-		DBName:   "test",
-		SSLMode:  "disable",
-	}
-
-	// This will likely fail in test environment without a real database
-	_, err := NewDatabase(config)
-	if err != nil {
-		t.Logf("Database creation failed (expected in test environment): %v", err)
 	}
 }

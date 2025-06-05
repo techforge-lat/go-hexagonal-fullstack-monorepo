@@ -54,7 +54,7 @@ func New(serviceName string, config *localconfig.Config, database *postgres.Adap
 	publicAPI := api.Group("/api/v1")
 	privateAPI := api.Group("/api/v1")
 
-	return &Server{
+	server := &Server{
 		ServiceName: serviceName,
 		API:         api,
 		PrivateAPI:  privateAPI,
@@ -62,12 +62,12 @@ func New(serviceName string, config *localconfig.Config, database *postgres.Adap
 		Config:      config,
 		Logger:      appLogger,
 		Database:    database,
-	}, nil
-}
+	}
 
-// NewDatabase creates a new database connection using the provided configuration
-func NewDatabase(config localconfig.DatabaseConfig) (*postgres.Adapter, error) {
-	return postgres.New(config)
+	// Add health check endpoint
+	server.PublicAPI.GET("/health", server.HealthCheckController)
+
+	return server, nil
 }
 
 func (s *Server) Start() error {
@@ -93,9 +93,6 @@ func (s *Server) Start() error {
 	s.API.Server.BaseContext = func(listener net.Listener) context.Context {
 		return ctx
 	}
-
-	// Add health check endpoint
-	s.PublicAPI.GET("/health", s.HealthCheckController)
 
 	srvErr := make(chan error, 1)
 

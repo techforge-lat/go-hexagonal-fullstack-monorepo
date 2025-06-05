@@ -1,10 +1,11 @@
 package server
 
 import (
+	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+	"go-hexagonal-fullstack-monorepo/internal/shared/repository/postgres"
 	"log"
 
 	"github.com/labstack/echo/v4"
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 )
 
 // ExampleUsage demonstrates how to properly initialize the server with dependency injection
@@ -16,7 +17,7 @@ func ExampleUsage() {
 	}
 
 	// 2. Create database connection (dependency injection)
-	database, err := NewDatabase(config.Database)
+	database, err := postgres.New(config.Database)
 	if err != nil {
 		log.Fatalf("Failed to create database connection: %v", err)
 	}
@@ -75,7 +76,7 @@ func ExampleUsageWithMockDatabase() {
 
 	// In tests, you would create a mock database instead
 	// mockDB := &MockDatabase{} // your mock implementation
-	
+
 	// For this example, we'll use nil to demonstrate the pattern
 	server, err := New("test-service", config, nil)
 	if err != nil {
