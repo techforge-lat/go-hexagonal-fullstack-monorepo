@@ -34,7 +34,6 @@ func New(serviceName string, config *localconfig.Config, database *postgres.Adap
 	appLogger := logger.NewFromConfig(config.Logger)
 
 	api := echo.New()
-	api.HideBanner = true
 
 	// HTTP Error Handler using custom middleware
 	api.HTTPErrorHandler = middleware.ErrorHandler(appLogger.Logger)
@@ -124,6 +123,15 @@ func (s *Server) Start() error {
 	return nil
 }
 
+// HealthCheckController handles health check requests
+// @Summary      Health Check
+// @Description  Check if the service is healthy and database is reachable
+// @Tags         health
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  response.Response  "Service is healthy"
+// @Failure      503  {object}  response.Response  "Service is unavailable"
+// @Router       /health [get]
 func (s *Server) HealthCheckController(c echo.Context) error {
 	ctx := c.Request().Context()
 

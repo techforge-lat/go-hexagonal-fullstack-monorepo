@@ -65,16 +65,25 @@ tidy:
 	go mod tidy
 	@printf "$(ccgreen)Modules tidied!$(ccend)\n"
 
+# Swagger documentation
+swagger-generate:
+	@printf "$(ccyellow)Generating swagger docs...$(ccend)\n"
+	swag init -g cmd/api/main.go -o cmd/api/docs
+	@printf "$(ccgreen)Swagger docs generated!$(ccend)\n"
+
 # Installation targets
 install-migrate:
 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+install-swag:
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 # Setup and run targets
 create-logs:
 	mkdir -p logs
 	touch logs/app.log
 
-setup: install-migrate create-logs
+setup: install-migrate install-swag create-logs
 	@echo "Setup done!"
 
 run-api:
@@ -89,4 +98,4 @@ run-wizard:
 	@printf "$(ccyellow)Running wizard...$(ccend)\n"
 	go run ./cmd/wizard
 
-.PHONY: all fmt test test-cover vulnerability vet build tidy migration-create migration-up migration-down install-migrate create-logs setup run-api run-cms run-wizard
+.PHONY: all fmt test test-cover vulnerability vet build tidy swagger-generate migration-create migration-up migration-down install-migrate install-swag create-logs setup run-api run-cms run-wizard
