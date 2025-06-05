@@ -149,7 +149,7 @@ func ExampleResponse_Extension() {
 	// }
 }
 
-func ExampleIntegrationWithFault() {
+func ExampleFromError_integrationWithFault() {
 	// Simulate a service that might fail
 	user, err := getUserFromDatabase("123")
 	if err != nil {

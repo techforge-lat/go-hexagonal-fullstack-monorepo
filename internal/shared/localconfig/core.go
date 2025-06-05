@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -13,6 +14,7 @@ type Config struct {
 	HTTP     HTTPConfig
 	JWT      JWTConfig
 	Logger   LoggerConfig
+	OTEL     OTELConfig
 }
 
 type DatabaseConfig struct {
@@ -25,7 +27,9 @@ type DatabaseConfig struct {
 }
 
 type HTTPConfig struct {
-	Port int
+	Port           int
+	AllowedOrigins []string
+	AllowedMethods []string
 }
 
 type JWTConfig struct {
@@ -36,6 +40,11 @@ type LoggerConfig struct {
 	Level     string
 	Format    string
 	AddSource bool
+}
+
+type OTELConfig struct {
+	CollectorEndpoint string
+	Environment       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -62,8 +71,13 @@ func LoadConfig() (*Config, error) {
 		SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 	}
 
+	allowedOrigins := strings.Split(getEnv("ALLOWED_ORIGINS", "*"), ",")
+	allowedMethods := strings.Split(getEnv("ALLOWED_METHODS", "GET,POST,PUT,DELETE,PATCH,OPTIONS"), ",")
+
 	config.HTTP = HTTPConfig{
-		Port: httpPort,
+		Port:           httpPort,
+		AllowedOrigins: allowedOrigins,
+		AllowedMethods: allowedMethods,
 	}
 
 	config.JWT = JWTConfig{
@@ -74,6 +88,11 @@ func LoadConfig() (*Config, error) {
 		Level:     getEnv("LOG_LEVEL", "info"),
 		Format:    getEnv("LOG_FORMAT", "text"),
 		AddSource: getEnv("LOG_ADD_SOURCE", "false") == "true",
+	}
+
+	config.OTEL = OTELConfig{
+		CollectorEndpoint: getEnv("OTEL_COLLECTOR_ENDPOINT", "localhost:4318"),
+		Environment:       getEnv("ENVIRONMENT", "development"),
 	}
 
 	if config.JWT.Secret == "" {
