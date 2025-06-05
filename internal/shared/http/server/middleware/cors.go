@@ -2,12 +2,11 @@ package middleware
 
 import (
 	"errors"
+	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
 	"log/slog"
 
 	"github.com/labstack/echo/v4"
-
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
-	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
 )
 
 // ErrorHandler creates a custom error handler that integrates with the fault package
@@ -28,7 +27,7 @@ func ErrorHandler(logger *slog.Logger) echo.HTTPErrorHandler {
 			if he.Message != nil {
 				message = he.Message.(string)
 			}
-			resp := response.New().Status(he.Code).Detail(message)
+			resp := response.New[any]().Status(he.Code).Detail(message)
 			if jsonErr := c.JSON(he.Code, resp); jsonErr != nil {
 				logger.Error("failed to send echo error response", "error", jsonErr.Error())
 			}
@@ -68,3 +67,4 @@ func RequestLogger(logger *slog.Logger) echo.MiddlewareFunc {
 		}
 	}
 }
+

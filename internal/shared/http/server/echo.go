@@ -124,14 +124,6 @@ func (s *Server) Start() error {
 }
 
 // HealthCheckController handles health check requests
-// @Summary      Health Check
-// @Description  Check if the service is healthy and database is reachable
-// @Tags         health
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  response.Response  "Service is healthy"
-// @Failure      503  {object}  response.Response  "Service is unavailable"
-// @Router       /health [get]
 func (s *Server) HealthCheckController(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -139,22 +131,24 @@ func (s *Server) HealthCheckController(c echo.Context) error {
 		if err := s.Database.Ping(ctx); err != nil {
 			s.Logger.Error("database ping failed", "error", err.Error(), "service", s.ServiceName)
 
-			resp := response.New().
+			resp := response.New[any]().
 				Status(http.StatusServiceUnavailable).
 				Title("Service Unavailable").
 				Detail("Database connection failed").
-				Extension("service_name", s.ServiceName).
-				Extension("server_time", time.Now().UTC())
+				Extension("serviceName", s.ServiceName).
+				Extension("serverTime", time.Now().UTC())
 
 			return c.JSON(resp.GetStatus(), resp)
 		}
 	}
 
-	resp := response.Ok(map[string]any{
-		"status":       "healthy",
-		"service_name": s.ServiceName,
-		"server_time":  time.Now().UTC(),
-	})
+	healthData := response.HealthResponse{
+		Status:      "healthy",
+		ServiceName: s.ServiceName,
+		ServerTime:  time.Now().UTC(),
+	}
+
+	resp := response.Ok(healthData)
 
 	return c.JSON(resp.GetStatus(), resp)
 }

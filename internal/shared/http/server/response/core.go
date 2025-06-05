@@ -7,8 +7,8 @@ import (
 
 const DefaultProblemType = "about:blank"
 
-// Response represents an RFC 9457 Problem Details response
-type Response struct {
+// Response represents an RFC 9457 Problem Details response with typed data
+type Response[T any] struct {
 	// RFC 9457 standard fields
 	TypeURI     string `json:"type"`
 	TitleText   string `json:"title,omitempty"`
@@ -16,59 +16,59 @@ type Response struct {
 	StatusCode  int    `json:"status"`
 	InstanceURI string `json:"instance,omitempty"`
 
-	// Success response field
-	DataValue any `json:"data,omitempty"`
+	// Success response field with type safety
+	DataValue T `json:"data,omitempty"`
 
 	// Extensions (any additional fields)
 	Extensions map[string]any `json:"-"`
 }
 
 // New creates a new response builder with default problem type
-func New() *Response {
-	return &Response{
+func New[T any]() *Response[T] {
+	return &Response[T]{
 		TypeURI:    DefaultProblemType,
 		Extensions: make(map[string]any),
 	}
 }
 
 // Type sets the problem type URI
-func (r *Response) Type(uri string) *Response {
+func (r *Response[T]) Type(uri string) *Response[T] {
 	r.TypeURI = uri
 	return r
 }
 
 // Title sets the problem title
-func (r *Response) Title(title string) *Response {
+func (r *Response[T]) Title(title string) *Response[T] {
 	r.TitleText = title
 	return r
 }
 
 // Detail sets the problem detail
-func (r *Response) Detail(detail string) *Response {
+func (r *Response[T]) Detail(detail string) *Response[T] {
 	r.DetailText = detail
 	return r
 }
 
 // Status sets the HTTP status code
-func (r *Response) Status(code int) *Response {
+func (r *Response[T]) Status(code int) *Response[T] {
 	r.StatusCode = code
 	return r
 }
 
 // Instance sets the problem instance URI
-func (r *Response) Instance(uri string) *Response {
+func (r *Response[T]) Instance(uri string) *Response[T] {
 	r.InstanceURI = uri
 	return r
 }
 
 // Data sets the success response data
-func (r *Response) Data(data any) *Response {
+func (r *Response[T]) Data(data T) *Response[T] {
 	r.DataValue = data
 	return r
 }
 
 // Extension adds a custom extension field
-func (r *Response) Extension(key string, value any) *Response {
+func (r *Response[T]) Extension(key string, value any) *Response[T] {
 	if r.Extensions == nil {
 		r.Extensions = make(map[string]any)
 	}
@@ -77,23 +77,23 @@ func (r *Response) Extension(key string, value any) *Response {
 }
 
 // GetStatus returns the HTTP status code
-func (r *Response) GetStatus() int {
+func (r *Response[T]) GetStatus() int {
 	return r.StatusCode
 }
 
 // IsSuccess returns true if the response represents a successful operation
-func (r *Response) IsSuccess() bool {
+func (r *Response[T]) IsSuccess() bool {
 	return r.StatusCode >= 200 && r.StatusCode < 300
 }
 
 // IsError returns true if the response represents an error
-func (r *Response) IsError() bool {
+func (r *Response[T]) IsError() bool {
 	return r.StatusCode >= 400
 }
 
 // Ok creates a successful response with data
-func Ok(data any) *Response {
-	return &Response{
+func Ok[T any](data T) *Response[T] {
+	return &Response[T]{
 		TypeURI:    DefaultProblemType,
 		StatusCode: http.StatusOK,
 		DataValue:  data,
@@ -101,8 +101,8 @@ func Ok(data any) *Response {
 }
 
 // Created creates a 201 Created response with data
-func Created(data any) *Response {
-	return &Response{
+func Created[T any](data T) *Response[T] {
+	return &Response[T]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Resource Created",
 		DetailText: "The resource was successfully created",
@@ -112,12 +112,12 @@ func Created(data any) *Response {
 }
 
 // FromError creates a problem details response from a fault.Error
-func FromError(err *fault.Error) *Response {
+func FromError(err *fault.Error) *Response[any] {
 	if err == nil {
 		return InternalError()
 	}
 
-	response := &Response{
+	response := &Response[any]{
 		TypeURI:    DefaultProblemType,
 		StatusCode: err.HTTPStatus(),
 		Extensions: make(map[string]any),
@@ -159,8 +159,8 @@ func FromError(err *fault.Error) *Response {
 // Predefined error responses
 
 // NotFound creates a 404 Not Found response
-func NotFound() *Response {
-	return &Response{
+func NotFound() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Resource Not Found",
 		DetailText: "The requested resource could not be found",
@@ -169,8 +169,8 @@ func NotFound() *Response {
 }
 
 // BadRequest creates a 400 Bad Request response
-func BadRequest() *Response {
-	return &Response{
+func BadRequest() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Bad Request",
 		DetailText: "The request is invalid or malformed",
@@ -179,8 +179,8 @@ func BadRequest() *Response {
 }
 
 // Unauthorized creates a 401 Unauthorized response
-func Unauthorized() *Response {
-	return &Response{
+func Unauthorized() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Unauthorized",
 		DetailText: "Authentication is required to access this resource",
@@ -189,8 +189,8 @@ func Unauthorized() *Response {
 }
 
 // Forbidden creates a 403 Forbidden response
-func Forbidden() *Response {
-	return &Response{
+func Forbidden() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Forbidden",
 		DetailText: "You do not have permission to access this resource",
@@ -199,8 +199,8 @@ func Forbidden() *Response {
 }
 
 // InternalError creates a 500 Internal Server Error response
-func InternalError() *Response {
-	return &Response{
+func InternalError() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Internal Server Error",
 		DetailText: "An unexpected error occurred on the server",
@@ -209,8 +209,8 @@ func InternalError() *Response {
 }
 
 // UnprocessableEntity creates a 422 Unprocessable Entity response
-func UnprocessableEntity() *Response {
-	return &Response{
+func UnprocessableEntity() *Response[any] {
+	return &Response[any]{
 		TypeURI:    DefaultProblemType,
 		TitleText:  "Validation Failed",
 		DetailText: "The provided data failed validation requirements",

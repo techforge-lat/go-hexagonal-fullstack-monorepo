@@ -2,11 +2,12 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // MarshalJSON implements custom JSON marshaling for Response
 // This ensures that extensions are included at the top level of the JSON
-func (r *Response) MarshalJSON() ([]byte, error) {
+func (r *Response[T]) MarshalJSON() ([]byte, error) {
 	// Create a map with all the standard fields
 	result := map[string]any{
 		"type":   r.TypeURI,
@@ -23,9 +24,7 @@ func (r *Response) MarshalJSON() ([]byte, error) {
 	if r.InstanceURI != "" {
 		result["instance"] = r.InstanceURI
 	}
-	if r.DataValue != nil {
-		result["data"] = r.DataValue
-	}
+	result["data"] = r.DataValue
 
 	// Add all extensions at the top level
 	for key, value := range r.Extensions {
@@ -36,7 +35,7 @@ func (r *Response) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling for Response
-func (r *Response) UnmarshalJSON(data []byte) error {
+func (r *Response[T]) UnmarshalJSON(data []byte) error {
 	// First unmarshal into a generic map
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -83,7 +82,12 @@ func (r *Response) UnmarshalJSON(data []byte) error {
 	}
 
 	if dataVal, exists := raw["data"]; exists {
-		r.DataValue = dataVal
+		d, ok := dataVal.(T)
+		if !ok {
+			return fmt.Errorf("data value is not of type %T", r.DataValue)
+		}
+		r.DataValue = d
+
 		delete(raw, "data")
 	}
 
