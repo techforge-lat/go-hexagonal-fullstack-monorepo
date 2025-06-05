@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig
 	HTTP     HTTPConfig
 	JWT      JWTConfig
+	Logger   LoggerConfig
 }
 
 type DatabaseConfig struct {
@@ -29,6 +30,12 @@ type HTTPConfig struct {
 
 type JWTConfig struct {
 	Secret string
+}
+
+type LoggerConfig struct {
+	Level     string
+	Format    string
+	AddSource bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -61,6 +68,12 @@ func LoadConfig() (*Config, error) {
 
 	config.JWT = JWTConfig{
 		Secret: getEnv("JWT_SECRET", ""),
+	}
+
+	config.Logger = LoggerConfig{
+		Level:     getEnv("LOG_LEVEL", "info"),
+		Format:    getEnv("LOG_FORMAT", "text"),
+		AddSource: getEnv("LOG_ADD_SOURCE", "false") == "true",
 	}
 
 	if config.JWT.Secret == "" {
