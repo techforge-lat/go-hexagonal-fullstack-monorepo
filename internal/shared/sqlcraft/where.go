@@ -62,29 +62,37 @@ func Where(initialArgCount int, filters ...dafi.Filter) (Result, error) {
 	args := []any{}
 	argCount := initialArgCount
 
-	for _, filter := range filters {
+	for i, filter := range filters {
 		if filter.IsGroupOpen {
-			builder.WriteString("(")
+			for j := 0; j < max(1, filter.GroupOpenQty); j++ {
+				builder.WriteString("(")
+			}
 		}
 
-		if filter.Operator == dafi.IsNull || filter.Operator == dafi.IsNotNull {
+		// Handle operator - default to Equal if not set
+		operator := filter.Operator
+		if operator == "" {
+			operator = dafi.Equal
+		}
+
+		if operator == dafi.IsNull || operator == dafi.IsNotNull {
 			builder.WriteString(string(filter.Field))
 			builder.WriteString(" ")
-			builder.WriteString(psqlOperatorByDafiOperator[filter.Operator])
-		} else if filter.Operator == dafi.In || filter.Operator == dafi.NotIn {
+			builder.WriteString(psqlOperatorByDafiOperator[operator])
+		} else if operator == dafi.In || operator == dafi.NotIn {
 			builder.WriteString(string(filter.Field))
 			builder.WriteString(" ")
-			builder.WriteString(psqlOperatorByDafiOperator[filter.Operator])
+			builder.WriteString(psqlOperatorByDafiOperator[operator])
 			builder.WriteString(" ")
 
 			inResult := In(filter.Value, argCount+1)
 			builder.WriteString(inResult.Sql)
 			args = append(args, inResult.Args...)
 			argCount += len(inResult.Args)
-		} else if filter.Operator == dafi.Contains || filter.Operator == dafi.NotContains {
+		} else if operator == dafi.Contains || operator == dafi.NotContains {
 			builder.WriteString(string(filter.Field))
 			builder.WriteString(" ")
-			builder.WriteString(psqlOperatorByDafiOperator[filter.Operator])
+			builder.WriteString(psqlOperatorByDafiOperator[operator])
 			builder.WriteString(" ")
 			builder.WriteString("$")
 			builder.WriteString(strconv.Itoa(argCount + 1))
@@ -94,7 +102,7 @@ func Where(initialArgCount int, filters ...dafi.Filter) (Result, error) {
 		} else {
 			builder.WriteString(string(filter.Field))
 			builder.WriteString(" ")
-			builder.WriteString(psqlOperatorByDafiOperator[filter.Operator])
+			builder.WriteString(psqlOperatorByDafiOperator[operator])
 			builder.WriteString(" ")
 			builder.WriteString("$")
 			builder.WriteString(strconv.Itoa(argCount + 1))
@@ -104,12 +112,19 @@ func Where(initialArgCount int, filters ...dafi.Filter) (Result, error) {
 		}
 
 		if filter.IsGroupClose {
-			builder.WriteString(")")
+			for j := 0; j < max(1, filter.GroupCloseQty); j++ {
+				builder.WriteString(")")
+			}
 		}
 
-		if filter.ChainingKey != "" {
+		// Add chaining key for all but the last filter
+		if i < len(filters)-1 {
+			chainingKey := filter.ChainingKey
+			if chainingKey == "" {
+				chainingKey = dafi.And // Default to AND
+			}
 			builder.WriteString(" ")
-			builder.WriteString(string(filter.ChainingKey))
+			builder.WriteString(string(chainingKey))
 			builder.WriteString(" ")
 		}
 	}
@@ -118,4 +133,11 @@ func Where(initialArgCount int, filters ...dafi.Filter) (Result, error) {
 		Sql:  builder.String(),
 		Args: args,
 	}, nil
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

@@ -24,7 +24,7 @@ func In(value any, initialArgCount int) Result {
 			return Result{}
 		}
 
-		for i := 0; i < valSlice.Len(); i++ {
+		for i := range valSlice.Len() {
 			builder.WriteString("$")
 			builder.WriteString(strconv.Itoa(initialArgCount + i))
 			builder.WriteString(", ")
@@ -66,3 +66,4 @@ func In(value any, initialArgCount int) Result {
 		Args: args,
 	}
 }
+
