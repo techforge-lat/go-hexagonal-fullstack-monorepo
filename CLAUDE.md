@@ -9,11 +9,13 @@ This is a Go hexagonal architecture starter template within a monorepo structure
 ## Architecture
 
 ### Hexagonal Architecture Structure
+
 - `internal/core/`: Domain logic and business rules (currently empty - to be implemented)
 - `internal/shared/`: Shared infrastructure and utilities
 - `cmd/`: Application entry points for different services (api, cms, wizard)
 
 ### Key Shared Components
+
 - **Fault Handling**: Custom error tracing system at `internal/shared/fault/` with HTTP status code mapping and enhanced error context
 - **HTTP Server**: Echo-based server setup in `internal/shared/http/server/`
 - **Database**: PostgreSQL connection and health checks in `internal/shared/repository/postgres/`
@@ -50,14 +52,16 @@ go mod tidy
 ## Application Structure
 
 The project supports multiple applications through the `cmd/` directory:
+
 - `cmd/api/`: API server application
-- `cmd/cms/`: CMS application  
+- `cmd/cms/`: CMS application
 - `cmd/wizard/`: Wizard application
 - `cmd/runner.go`: Shared runner functionality
 
 ## Error Handling
 
 This project uses a custom fault package for enhanced error handling:
+
 - Location: `internal/shared/fault/`
 - Provides error tracing with caller information
 - Maps errors to HTTP status codes
@@ -69,3 +73,7 @@ This project uses a custom fault package for enhanced error handling:
 - Database: PostgreSQL (connection setup in `internal/shared/repository/postgres/`)
 - HTTP Framework: Echo (server setup in `internal/shared/http/server/`)
 - Observability: Ready for Grafana, Loki, Tempo, and OpenTelemetry (config files in `devops/`)
+
+## Git
+
+- Always use conventional commits (see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/))
