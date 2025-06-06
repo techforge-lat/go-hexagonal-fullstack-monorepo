@@ -3,11 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
 	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Adapter struct {

@@ -2,26 +2,20 @@ package main
 
 import (
 	"go-hexagonal-fullstack-monorepo/cmd"
-	"go-hexagonal-fullstack-monorepo/cmd/api/router"
-	"go-hexagonal-fullstack-monorepo/internal/shared/di"
+	"go-hexagonal-fullstack-monorepo/cmd/cms/router"
 	"log"
 )
 
-const serviceName = "api"
+const serviceName = "cms"
 
-// Run starts the API server with default configuration from environment variables
+// Run starts the CMS server with default configuration from environment variables
 func Run() {
 	server, err := cmd.NewServerInstance(serviceName)
 	if err != nil {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
-	if err := di.ProvideDependencies(server.Container); err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	if err := router.SetAPIRoutes(server); err != nil {
+	if err := router.SetCMSRoutes(server); err != nil {
 		log.Fatalf("Failed to setup routes: %v", err)
 	}
 
@@ -30,3 +24,4 @@ func Run() {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
+

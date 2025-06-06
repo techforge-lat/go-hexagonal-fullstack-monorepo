@@ -18,6 +18,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/techforge-lat/linkit"
 )
 
 type Server struct {
@@ -28,10 +29,18 @@ type Server struct {
 	Config      *localconfig.Config
 	Logger      *logger.Logger
 	Database    *postgres.Adapter
+
+	Container *linkit.DependencyContainer
 }
 
 func New(serviceName string, config *localconfig.Config, database *postgres.Adapter) (*Server, error) {
+	container := linkit.New()
+
 	appLogger := logger.NewFromConfig(config.Logger)
+	container.Provide(logger.DependencyName, appLogger)
+
+	container.Provide(postgres.DatabaseDependency, database)
+	container.Provide(localconfig.ConfigDependency, config)
 
 	api := echo.New()
 
@@ -61,10 +70,11 @@ func New(serviceName string, config *localconfig.Config, database *postgres.Adap
 		Config:      config,
 		Logger:      appLogger,
 		Database:    database,
+		Container:   container,
 	}
 
 	// Add health check endpoint
-	server.PublicAPI.GET("/health", server.HealthCheckController)
+	server.API.GET("/health", server.HealthCheckController)
 
 	return server, nil
 }
