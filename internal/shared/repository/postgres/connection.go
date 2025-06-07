@@ -15,14 +15,16 @@ type Adapter struct {
 }
 
 func New(configDB localconfig.DatabaseConfig) (*Adapter, error) {
-	config, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		configDB.User,
 		configDB.Password,
 		configDB.Host,
 		configDB.Port,
 		configDB.DBName,
 		configDB.SSLMode,
-	))
+	)
+
+	config, err := pgxpool.ParseConfig(connectionString)
 	if err != nil {
 		return nil, fault.Wrap(fmt.Errorf("unable to parse config connection: %w", err))
 	}
@@ -39,8 +41,4 @@ func New(configDB localconfig.DatabaseConfig) (*Adapter, error) {
 	}
 
 	return &Adapter{dbPool}, nil
-}
-
-func (a *Adapter) Ping(ctx context.Context) error {
-	return a.Pool.Ping(ctx)
 }

@@ -21,7 +21,7 @@ func NewDatabase(config *localconfig.Config) (ports.Database, error) {
 
 func NewUnitOfWork(db ports.Database, lc fx.Lifecycle) ports.UnitOfWork {
 	uow := NewPostgresUnitOfWork(db)
-	
+
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			if adapter, ok := db.(*Adapter); ok {
@@ -30,6 +30,6 @@ func NewUnitOfWork(db ports.Database, lc fx.Lifecycle) ports.UnitOfWork {
 			return nil
 		},
 	})
-	
+
 	return uow
 }

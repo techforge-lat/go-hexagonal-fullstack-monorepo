@@ -22,7 +22,7 @@ func Run() {
 		server.Module,
 		user.Module,
 		fx.Invoke(router.SetAPIRoutes),
-		fx.NopLogger, // Disable fx's own logging to use our custom logger
+		// fx.NopLogger, // Disable fx's own logging to use our custom logger
 	)
 
 	app.Run()

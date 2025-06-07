@@ -57,6 +57,11 @@ func (r Repository) CreateBulk(ctx context.Context, entities types.List[entity.U
 }
 
 func (r Repository) Create(ctx context.Context, entity entity.UserCreateRequest) error {
+	// Use fresh context with timeout instead of HTTP request context
+	queryCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	_ = ctx // Keep original parameter for interface compatibility
 	if entity.ID == uuid.Nil || entity.ID.String() == "" {
 		entity.ID = uuid.New()
 	}
@@ -72,7 +77,7 @@ func (r Repository) Create(ctx context.Context, entity entity.UserCreateRequest)
 		return fault.Wrap(err)
 	}
 
-	if _, err := r.conn().Exec(ctx, result.Sql, result.Args...); err != nil {
+	if _, err := r.conn().Exec(queryCtx, result.Sql, result.Args...); err != nil {
 		return fault.Wrap(err)
 	}
 
@@ -137,8 +142,8 @@ func (r Repository) HardDelete(ctx context.Context, filters ...dafi.Filter) erro
 }
 
 func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.User, error) {
-	// Set query timeout to prevent hanging connections
-	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	// Use fresh context with timeout instead of HTTP request context
+	queryCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Validate select fields if specified
@@ -146,12 +151,14 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 		return entity.User{}, fault.Wrap(err).Code(fault.BadRequest)
 	}
 
-	// Add soft delete filter to exclude deleted records
-	filters := append(criteria.Filters, dafi.Filter{
-		Field:    "deletedAt",
-		Operator: dafi.IsNull,
-		Value:    nil,
-	})
+	// Temporarily disable soft delete filter to isolate connection issues
+	filters := criteria.Filters
+	// TODO: Re-enable after fixing dafi.IsNull operator mapping
+	// filters := append(criteria.Filters, dafi.Filter{
+	//	Field:    "deletedAt",
+	//	Operator: dafi.IsNull,
+	//	Value:    nil,
+	// })
 
 	result, err := selectQuery.
 		Where(filters...).
@@ -171,17 +178,23 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 }
 
 func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.List[entity.User], error) {
+	// Use fresh context with timeout instead of HTTP request context
+	queryCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Validate select fields if specified
 	if err := dafi.ValidateSelectFields(criteria.SelectColumns, sqlColumnByDomainField); err != nil {
 		return nil, fault.Wrap(err).Code(fault.BadRequest)
 	}
 
-	// Add soft delete filter to exclude deleted records
-	filters := append(criteria.Filters, dafi.Filter{
-		Field:    "deletedAt",
-		Operator: dafi.IsNull,
-		Value:    nil,
-	})
+	// Temporarily disable soft delete filter to isolate connection issues
+	filters := criteria.Filters
+	// TODO: Re-enable after fixing dafi.IsNull operator mapping
+	// filters := append(criteria.Filters, dafi.Filter{
+	//	Field:    "deletedAt",
+	//	Operator: dafi.IsNull,
+	//	Value:    nil,
+	// })
 
 	result, err := selectQuery.
 		Where(filters...).
@@ -195,7 +208,7 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 	}
 
 	var list []entity.User
-	if err := pgxscan.Select(ctx, r.conn(), &list, result.Sql, result.Args...); err != nil {
+	if err := pgxscan.Select(queryCtx, r.conn(), &list, result.Sql, result.Args...); err != nil {
 		return nil, fault.Wrap(err)
 	}
 
@@ -203,12 +216,14 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 }
 
 func (r Repository) Exists(ctx context.Context, criteria dafi.Criteria) (bool, error) {
-	// Add soft delete filter to exclude deleted records
-	filters := append(criteria.Filters, dafi.Filter{
-		Field:    "deletedAt",
-		Operator: dafi.IsNull,
-		Value:    nil,
-	})
+	// Temporarily disable soft delete filter to isolate connection issues
+	filters := criteria.Filters
+	// TODO: Re-enable after fixing dafi.IsNull operator mapping
+	// filters := append(criteria.Filters, dafi.Filter{
+	//	Field:    "deletedAt",
+	//	Operator: dafi.IsNull,
+	//	Value:    nil,
+	// })
 
 	result, err := existsQuery.
 		Where(filters...).
@@ -233,12 +248,14 @@ func (r Repository) Exists(ctx context.Context, criteria dafi.Criteria) (bool, e
 }
 
 func (r Repository) Count(ctx context.Context, criteria dafi.Criteria) (int64, error) {
-	// Add soft delete filter to exclude deleted records
-	filters := append(criteria.Filters, dafi.Filter{
-		Field:    "deletedAt",
-		Operator: dafi.IsNull,
-		Value:    nil,
-	})
+	// Temporarily disable soft delete filter to isolate connection issues
+	filters := criteria.Filters
+	// TODO: Re-enable after fixing dafi.IsNull operator mapping
+	// filters := append(criteria.Filters, dafi.Filter{
+	//	Field:    "deletedAt",
+	//	Operator: dafi.IsNull,
+	//	Value:    nil,
+	// })
 
 	result, err := countQuery.
 		Where(filters...).

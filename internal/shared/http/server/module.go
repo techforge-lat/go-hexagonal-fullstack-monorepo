@@ -14,6 +14,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.uber.org/fx"
 )
 
@@ -27,7 +28,7 @@ type ServerParams struct {
 	fx.In
 	Config   *localconfig.Config
 	Logger   ports.Logger
-	Database ports.Database `optional:"true"`
+	Database ports.Database
 }
 
 var Module = fx.Module("http_server",
@@ -41,9 +42,11 @@ func NewEchoServer(params ServerParams, lc fx.Lifecycle) *EchoServer {
 	api.HTTPErrorHandler = middleware.ErrorHandler(params.Logger)
 
 	// Basic middleware
+	api.Use(otelecho.Middleware("api"))
 	api.Use(echomiddleware.RequestID())
 	api.Use(echomiddleware.Recover())
-	api.Use(middleware.RequestLogger(params.Logger))
+	api.Use(echomiddleware.Logger())
+	// api.Use(middleware.RequestLogger(params.Logger))
 
 	// CORS middleware
 	api.Use(echomiddleware.CORSWithConfig(echomiddleware.CORSConfig{
@@ -118,19 +121,22 @@ func NewEchoServer(params ServerParams, lc fx.Lifecycle) *EchoServer {
 }
 
 func healthCheckHandler(c echo.Context, database ports.Database) error {
-	ctx := c.Request().Context()
+	// Use a fresh context with reasonable timeout instead of HTTP request context
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	if database != nil {
 		if err := database.Ping(ctx); err != nil {
-			return c.JSON(http.StatusServiceUnavailable, map[string]interface{}{
+			return c.JSON(http.StatusServiceUnavailable, map[string]any{
 				"status": "unhealthy",
 				"error":  "database connection failed",
+				"cause":  err.Error(),
 				"time":   time.Now().UTC(),
 			})
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]any{
 		"status": "healthy",
 		"time":   time.Now().UTC(),
 	})
