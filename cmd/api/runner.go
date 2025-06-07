@@ -1,32 +1,29 @@
 package main
 
 import (
-	"go-hexagonal-fullstack-monorepo/cmd"
 	"go-hexagonal-fullstack-monorepo/cmd/api/router"
-	"go-hexagonal-fullstack-monorepo/internal/shared/di"
-	"log"
+	"go-hexagonal-fullstack-monorepo/internal/core/user"
+	"go-hexagonal-fullstack-monorepo/internal/shared/http/server"
+	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+	"go-hexagonal-fullstack-monorepo/internal/shared/logger"
+	"go-hexagonal-fullstack-monorepo/internal/shared/repository/postgres"
+
+	"go.uber.org/fx"
 )
 
 const serviceName = "api"
 
-// Run starts the API server with default configuration from environment variables
+// Run starts the API server using fx dependency injection
 func Run() {
-	server, err := cmd.NewServerInstance(serviceName)
-	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
-	}
+	app := fx.New(
+		localconfig.Module,
+		logger.Module,
+		postgres.Module,
+		server.Module,
+		user.Module,
+		fx.Invoke(router.SetAPIRoutes),
+		fx.NopLogger, // Disable fx's own logging to use our custom logger
+	)
 
-	if err := di.ProvideDependencies(server.Container); err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	if err := router.SetAPIRoutes(server); err != nil {
-		log.Fatalf("Failed to setup routes: %v", err)
-	}
-
-	// Start server with graceful shutdown
-	if err := server.Start(); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
+	app.Run()
 }

@@ -5,13 +5,10 @@ import (
 	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
 	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
-	"go-hexagonal-fullstack-monorepo/internal/shared/logger"
 	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
-	"go-hexagonal-fullstack-monorepo/internal/shared/repository/postgres"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/techforge-lat/linkit"
 )
 
 type Handler struct {
@@ -20,24 +17,16 @@ type Handler struct {
 	logger     ports.Logger
 }
 
-func NewHandler(useCase ports.UserUseCase) *Handler {
-	return &Handler{useCase: useCase}
-}
-
-func (h *Handler) ResolveAuxiliaryDependencies(container *linkit.DependencyContainer) error {
-	unitOfWork, err := linkit.Resolve[ports.UnitOfWork](container, postgres.UnitOfWorkDependency)
-	if err != nil {
-		return fault.Wrap(err)
+func NewHandler(
+	useCase ports.UserUseCase,
+	unitOfWork ports.UnitOfWork,
+	logger ports.Logger,
+) *Handler {
+	return &Handler{
+		useCase:    useCase,
+		unitOfWork: unitOfWork,
+		logger:     logger,
 	}
-	h.unitOfWork = unitOfWork
-
-	logger, err := linkit.Resolve[ports.Logger](container, logger.DependencyName)
-	if err != nil {
-		return fault.Wrap(err)
-	}
-	h.logger = logger
-
-	return nil
 }
 
 func (h Handler) Create(c echo.Context) error {

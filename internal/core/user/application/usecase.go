@@ -7,8 +7,6 @@ import (
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
 	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
 	"go-hexagonal-fullstack-monorepo/internal/shared/types"
-
-	"github.com/techforge-lat/linkit"
 )
 
 // UseCase implements the user business logic
@@ -27,11 +25,6 @@ func (uc UseCase) WithTx(tx ports.Transaction) ports.UserUseCase {
 	return &UseCase{
 		repo: uc.repo.WithTx(tx),
 	}
-}
-
-// ResolveAuxiliaryDependencies resolves the dependencies of the handler by implementing the linkit.Dependency interface
-func (uc *UseCase) ResolveAuxiliaryDependencies(container *linkit.DependencyContainer) error {
-	return nil
 }
 
 func (uc UseCase) CreateBulk(ctx context.Context, entities types.List[entity.UserCreateRequest]) error {

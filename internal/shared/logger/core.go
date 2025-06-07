@@ -83,36 +83,41 @@ func (l *Logger) WithGroup(name string) *Logger {
 	}
 }
 
-func (l *Logger) Debug(msg string, args ...any) {
+func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	l.Logger.DebugContext(ctx, msg, keysAndValues...)
+}
+
+func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	l.Logger.InfoContext(ctx, msg, keysAndValues...)
+}
+
+func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	l.Logger.WarnContext(ctx, msg, keysAndValues...)
+}
+
+func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	l.Logger.ErrorContext(ctx, msg, keysAndValues...)
+}
+
+func (l *Logger) Fatal(ctx context.Context, msg string, keysAndValues ...interface{}) {
+	l.Logger.ErrorContext(ctx, msg, keysAndValues...)
+	os.Exit(1)
+}
+
+func (l *Logger) DebugSimple(msg string, args ...any) {
 	l.Logger.Debug(msg, args...)
 }
 
-func (l *Logger) DebugContext(ctx context.Context, msg string, args ...any) {
-	l.Logger.DebugContext(ctx, msg, args...)
-}
-
-func (l *Logger) Info(msg string, args ...any) {
+func (l *Logger) InfoSimple(msg string, args ...any) {
 	l.Logger.Info(msg, args...)
 }
 
-func (l *Logger) InfoContext(ctx context.Context, msg string, args ...any) {
-	l.Logger.InfoContext(ctx, msg, args...)
-}
-
-func (l *Logger) Warn(msg string, args ...any) {
+func (l *Logger) WarnSimple(msg string, args ...any) {
 	l.Logger.Warn(msg, args...)
 }
 
-func (l *Logger) WarnContext(ctx context.Context, msg string, args ...any) {
-	l.Logger.WarnContext(ctx, msg, args...)
-}
-
-func (l *Logger) Error(msg string, args ...any) {
+func (l *Logger) ErrorSimple(msg string, args ...any) {
 	l.Logger.Error(msg, args...)
-}
-
-func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
-	l.Logger.ErrorContext(ctx, msg, args...)
 }
 
 func (l *Logger) Log(ctx context.Context, level slog.Level, msg string, args ...any) {

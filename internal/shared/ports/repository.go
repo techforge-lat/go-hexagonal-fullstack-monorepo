@@ -19,15 +19,22 @@ type UnitOfWork interface {
 	Rollback(ctx context.Context, tx Transaction) error
 }
 
-type Database interface {
-	Begin(ctx context.Context) (pgx.Tx, error)
-
+// DatabaseExecutor defines the common interface for database operations
+// This interface is implemented by both Database and Tx for consistency
+type DatabaseExecutor interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
+type Database interface {
+	DatabaseExecutor
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Ping(ctx context.Context) error
+}
+
 type Tx interface {
+	DatabaseExecutor
 	Begin(ctx context.Context) (pgx.Tx, error)
 	// Commit commits the transaction if this is a real transaction or releases the savepoint if this is a pseudo nested
 	// transaction. Commit will return an error where errors.Is(ErrTxClosed) is true if the Tx is already closed, but is
@@ -41,10 +48,6 @@ type Tx interface {
 	// be called first in a non-error condition. Any other failure of a real transaction will result in the connection
 	// being closed.
 	Rollback(ctx context.Context) error
-
-	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
-	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
 // RepositoryTx defines a generic interface for repositories that support transactions.

@@ -37,3 +37,7 @@ func New(configDB localconfig.DatabaseConfig) (*Adapter, error) {
 
 	return &Adapter{dbPool}, nil
 }
+
+func (a *Adapter) Ping(ctx context.Context) error {
+	return a.Pool.Ping(ctx)
+}

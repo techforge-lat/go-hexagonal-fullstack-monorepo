@@ -145,7 +145,7 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 
 // conn returns the database connection to use
 // if there is a transaction, it returns the transaction connection
-func (r Repository) conn() ports.Database {
+func (r Repository) conn() ports.DatabaseExecutor {
 	if r.tx != nil {
 		return r.tx
 	}

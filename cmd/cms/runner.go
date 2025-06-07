@@ -1,27 +1,32 @@
 package main
 
 import (
-	"go-hexagonal-fullstack-monorepo/cmd"
 	"go-hexagonal-fullstack-monorepo/cmd/cms/router"
-	"log"
+	"go-hexagonal-fullstack-monorepo/internal/shared/http/server"
+	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+	"go-hexagonal-fullstack-monorepo/internal/shared/logger"
+	"go-hexagonal-fullstack-monorepo/internal/shared/repository/postgres"
+
+	"go.uber.org/fx"
 )
 
 const serviceName = "cms"
 
-// Run starts the CMS server with default configuration from environment variables
+// Run starts the CMS server using fx dependency injection
 func Run() {
-	server, err := cmd.NewServerInstance(serviceName)
-	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
-	}
+	app := fx.New(
+		localconfig.Module,
+		logger.Module,
+		postgres.Module,
+		server.Module,
+		fx.Invoke(setupCMSRoutes),
+		fx.NopLogger, // Disable fx's own logging to use our custom logger
+	)
 
-	if err := router.SetCMSRoutes(server); err != nil {
-		log.Fatalf("Failed to setup routes: %v", err)
-	}
+	app.Run()
+}
 
-	// Start server with graceful shutdown
-	if err := server.Start(); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
+func setupCMSRoutes(echoServer *server.EchoServer) error {
+	return router.SetCMSRoutes(echoServer)
 }
 
