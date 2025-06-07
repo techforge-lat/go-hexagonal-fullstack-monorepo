@@ -1,6 +1,7 @@
 package dafi
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ const (
 	parameterPage   = "page"
 	parameterLimit  = "limit"
 	parameterSort   = "sort"
+	parameterSelect = "select"
 	defaultChaining = And
 )
 
@@ -59,6 +61,14 @@ func (p *QueryParser) Parse(values url.Values) (Criteria, error) {
 func (p *QueryParser) parseValues(key string, values []string, criteria *Criteria) error {
 	for _, value := range values {
 		if value == "" {
+			continue
+		}
+
+		// Handle select parameter specially - it doesn't use the colon format
+		if key == parameterSelect {
+			if err := p.parseSelect(value, criteria); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -198,4 +208,44 @@ func (p *QueryParser) determineChainingKey(parts []string) FilterChainingKey {
 	}
 
 	return defaultChaining
+}
+
+// parseSelect parses the select parameter which contains comma-separated field names
+// Example: "select=id,firstName,lastName" or "select=*"
+func (p *QueryParser) parseSelect(value string, criteria *Criteria) error {
+	if value == "*" {
+		// Select all fields - leave SelectColumns empty to indicate all fields should be selected
+		criteria.SelectColumns = nil
+		return nil
+	}
+
+	// Split by comma and trim whitespace
+	fields := strings.Split(value, ",")
+	selectColumns := make([]string, 0, len(fields))
+
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		if field != "" {
+			selectColumns = append(selectColumns, field)
+		}
+	}
+
+	criteria.SelectColumns = selectColumns
+	return nil
+}
+
+// ValidateSelectFields validates that all requested select fields are valid domain fields
+// This should be called by repositories that want to enforce field validation
+func ValidateSelectFields(selectFields []string, validFields map[string]string) error {
+	if len(selectFields) == 0 {
+		return nil // No validation needed for all fields
+	}
+
+	for _, field := range selectFields {
+		if _, ok := validFields[field]; !ok {
+			return fmt.Errorf("invalid field name for selection: %s", field)
+		}
+	}
+
+	return nil
 }

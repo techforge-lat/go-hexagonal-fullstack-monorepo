@@ -137,6 +137,11 @@ func (r Repository) HardDelete(ctx context.Context, filters ...dafi.Filter) erro
 }
 
 func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.User, error) {
+	// Validate select fields if specified
+	if err := dafi.ValidateSelectFields(criteria.SelectColumns, sqlColumnByDomainField); err != nil {
+		return entity.User{}, fault.Wrap(err).Code(fault.BadRequest)
+	}
+
 	// Add soft delete filter to exclude deleted records
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",
@@ -161,6 +166,11 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 }
 
 func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.List[entity.User], error) {
+	// Validate select fields if specified
+	if err := dafi.ValidateSelectFields(criteria.SelectColumns, sqlColumnByDomainField); err != nil {
+		return nil, fault.Wrap(err).Code(fault.BadRequest)
+	}
+
 	// Add soft delete filter to exclude deleted records
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",

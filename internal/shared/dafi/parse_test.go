@@ -181,6 +181,47 @@ func TestQueryParser_Parse(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:   "select specific fields",
+			fields: fields{operators: defaultOperators},
+			args: args{values: url.Values{
+				"select": []string{"id,firstName,lastName"},
+				"name":   []string{"eq:john"},
+			}},
+			want: Criteria{
+				SelectColumns: []string{"id", "firstName", "lastName"},
+				Filters: Filters{
+					{Field: "name", Operator: "eq", Value: "john", ChainingKey: And},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "select all fields with asterisk",
+			fields: fields{operators: defaultOperators},
+			args: args{values: url.Values{
+				"select": []string{"*"},
+				"age":    []string{"gt:18"},
+			}},
+			want: Criteria{
+				SelectColumns: nil, // nil means select all
+				Filters: Filters{
+					{Field: "age", Operator: "gt", Value: "18", ChainingKey: And},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "select with spaces around field names",
+			fields: fields{operators: defaultOperators},
+			args: args{values: url.Values{
+				"select": []string{" id , firstName , lastName "},
+			}},
+			want: Criteria{
+				SelectColumns: []string{"id", "firstName", "lastName"},
+			},
+			wantErr: false,
+		},
 		// {
 		// 	name:   "filters by module",
 		// 	fields: fields{operators: defaultOperators},

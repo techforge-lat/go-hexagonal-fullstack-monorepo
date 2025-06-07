@@ -5,23 +5,25 @@ ccyellow=$(shell printf "\033[0;33m")
 ccend=$(shell printf "\033[0m")
 
 # Environment variables for project
--include $(PWD)/cmd/api/.env
+-include $(PWD)/.env
 
 # Export all variables to sub-make
 export
 
-# Database migrations
-migration-create:
-	migrate create -ext sql -dir ./database/migrations $(name)
+# Database migrations - Use Go bin migrate tool to avoid Snowflake dependency issues
+MIGRATE_BIN := $(shell go env GOPATH)/bin/migrate
 
-DB_URL=$(DB_ENGINE)://$(DB_USER):$(DB_PASSWORD)@$(DB_SERVER):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
+migration-create:
+	$(MIGRATE_BIN) create -ext sql -dir ./database/migrations $(name)
+
+DB_URL=$(DB_ENGINE)://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
 
 migration-up:
 	@echo $(DB_URL)
-	migrate -source file://database/migrations -database $(DB_URL) up $(count)
+	$(MIGRATE_BIN) -source file://database/migrations -database $(DB_URL) up $(count)
 
 migration-down:
-	migrate -source file://database/migrations -database $(DB_URL) down $(count)
+	$(MIGRATE_BIN) -source file://database/migrations -database $(DB_URL) down $(count)
 
 # SILENT MODE (avoid echoes)
 .SILENT: all fmt test linter build

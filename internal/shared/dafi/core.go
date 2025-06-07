@@ -69,3 +69,9 @@ func (c Criteria) Page(value uint) Criteria {
 
 	return c
 }
+
+func (c Criteria) Select(columns ...string) Criteria {
+	c.SelectColumns = columns
+
+	return c
+}

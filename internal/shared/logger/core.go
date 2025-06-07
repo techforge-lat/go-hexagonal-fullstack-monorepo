@@ -20,22 +20,7 @@ type Config struct {
 }
 
 func New(config Config) *Logger {
-	var level slog.Level
-	switch config.Level {
-	case "debug":
-		level = slog.LevelDebug
-	case "info":
-		level = slog.LevelInfo
-	case "warn":
-		level = slog.LevelWarn
-	case "error":
-		level = slog.LevelError
-	default:
-		level = slog.LevelInfo
-	}
-
 	opts := &slog.HandlerOptions{
-		Level:     level,
 		AddSource: config.AddSource,
 	}
 
@@ -65,7 +50,6 @@ func Default() *Logger {
 
 func NewFromConfig(config localconfig.LoggerConfig) *Logger {
 	return New(Config{
-		Level:     config.Level,
 		Format:    config.Format,
 		AddSource: config.AddSource,
 	})
@@ -83,23 +67,23 @@ func (l *Logger) WithGroup(name string) *Logger {
 	}
 }
 
-func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Debug(ctx context.Context, msg string, keysAndValues ...any) {
 	l.Logger.DebugContext(ctx, msg, keysAndValues...)
 }
 
-func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Info(ctx context.Context, msg string, keysAndValues ...any) {
 	l.Logger.InfoContext(ctx, msg, keysAndValues...)
 }
 
-func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Warn(ctx context.Context, msg string, keysAndValues ...any) {
 	l.Logger.WarnContext(ctx, msg, keysAndValues...)
 }
 
-func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Error(ctx context.Context, msg string, keysAndValues ...any) {
 	l.Logger.ErrorContext(ctx, msg, keysAndValues...)
 }
 
-func (l *Logger) Fatal(ctx context.Context, msg string, keysAndValues ...interface{}) {
+func (l *Logger) Fatal(ctx context.Context, msg string, keysAndValues ...any) {
 	l.Logger.ErrorContext(ctx, msg, keysAndValues...)
 	os.Exit(1)
 }

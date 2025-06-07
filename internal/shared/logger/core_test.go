@@ -3,11 +3,10 @@ package logger
 import (
 	"bytes"
 	"context"
+	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 	"log/slog"
 	"strings"
 	"testing"
-
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 )
 
 func TestNew(t *testing.T) {
@@ -43,7 +42,7 @@ func TestNew(t *testing.T) {
 				t.Fatal("expected logger to be created")
 			}
 
-			logger.Info("test message", "key", "value")
+			logger.Info(context.Background(), "test message", "key", "value")
 
 			output := buf.String()
 			if output == "" {
@@ -92,10 +91,10 @@ func TestLoggerMethods(t *testing.T) {
 
 	ctx := context.Background()
 
-	logger.Debug("debug message")
-	logger.Info("info message")
-	logger.Warn("warn message")
-	logger.Error("error message")
+	logger.Debug(context.Background(), "debug message")
+	logger.Info(context.Background(), "info message")
+	logger.Warn(context.Background(), "warn message")
+	logger.Error(context.Background(), "error message")
 
 	logger.DebugContext(ctx, "debug context message")
 	logger.InfoContext(ctx, "info context message")
@@ -130,7 +129,7 @@ func TestLoggerWith(t *testing.T) {
 	})
 
 	childLogger := logger.With("service", "test")
-	childLogger.Info("test message")
+	childLogger.Info(context.Background(), "test message")
 
 	output := buf.String()
 	if !strings.Contains(output, "service=test") {
@@ -147,7 +146,7 @@ func TestLoggerWithGroup(t *testing.T) {
 	})
 
 	groupLogger := logger.WithGroup("database")
-	groupLogger.Info("connection established", "host", "localhost")
+	groupLogger.Info(context.Background(), "connection established", "host", "localhost")
 
 	output := buf.String()
 	if !strings.Contains(output, "database") {

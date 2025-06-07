@@ -13,5 +13,5 @@ func SetUserRoutes(echoServer *server.EchoServer, userHandler *presentation.Hand
 	group.PUT("", userHandler.Update)
 	group.DELETE("", userHandler.Delete)
 	group.GET("", userHandler.List)
-	group.GET("", userHandler.Find)
+	group.GET("/find", userHandler.Find)
 }
