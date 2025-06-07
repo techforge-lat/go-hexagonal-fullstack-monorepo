@@ -53,6 +53,8 @@ func (h Handler) Update(c echo.Context) error {
 		return fault.Wrap(err)
 	}
 
+	criteria = criteria.And("id", dafi.Equal, c.Param("id"))
+
 	if err := h.useCase.Update(c.Request().Context(), req, criteria.Filters...); err != nil {
 		return fault.Wrap(err)
 	}
@@ -66,6 +68,8 @@ func (h Handler) Delete(c echo.Context) error {
 		return fault.Wrap(err)
 	}
 
+	criteria = criteria.And("id", dafi.Equal, c.Param("id"))
+
 	if err := h.useCase.Delete(c.Request().Context(), criteria.Filters...); err != nil {
 		return fault.Wrap(err)
 	}
@@ -78,6 +82,8 @@ func (h Handler) Find(c echo.Context) error {
 	if err != nil {
 		return fault.Wrap(err)
 	}
+
+	criteria = criteria.And("id", dafi.Equal, c.Param("id"))
 
 	result, err := h.useCase.Find(c.Request().Context(), criteria)
 	if err != nil {

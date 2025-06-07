@@ -137,6 +137,10 @@ func (r Repository) HardDelete(ctx context.Context, filters ...dafi.Filter) erro
 }
 
 func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.User, error) {
+	// Set query timeout to prevent hanging connections
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	// Validate select fields if specified
 	if err := dafi.ValidateSelectFields(criteria.SelectColumns, sqlColumnByDomainField); err != nil {
 		return entity.User{}, fault.Wrap(err).Code(fault.BadRequest)
@@ -146,6 +150,7 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",
 		Operator: dafi.IsNull,
+		Value:    nil,
 	})
 
 	result, err := selectQuery.
@@ -158,7 +163,7 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 	}
 
 	var m entity.User
-	if err := pgxscan.Get(ctx, r.conn(), &m, result.Sql, result.Args...); err != nil {
+	if err := pgxscan.Get(queryCtx, r.conn(), &m, result.Sql, result.Args...); err != nil {
 		return entity.User{}, fault.Wrap(err)
 	}
 
@@ -175,6 +180,7 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",
 		Operator: dafi.IsNull,
+		Value:    nil,
 	})
 
 	result, err := selectQuery.
@@ -201,6 +207,7 @@ func (r Repository) Exists(ctx context.Context, criteria dafi.Criteria) (bool, e
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",
 		Operator: dafi.IsNull,
+		Value:    nil,
 	})
 
 	result, err := existsQuery.
@@ -230,6 +237,7 @@ func (r Repository) Count(ctx context.Context, criteria dafi.Criteria) (int64, e
 	filters := append(criteria.Filters, dafi.Filter{
 		Field:    "deletedAt",
 		Operator: dafi.IsNull,
+		Value:    nil,
 	})
 
 	result, err := countQuery.

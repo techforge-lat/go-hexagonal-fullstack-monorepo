@@ -8,14 +8,14 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID     `json:"id"`
-	FirstName string        `json:"firstName"`
-	LastName  null.String   `json:"lastName"`
-	Origin    string        `json:"origin"`
-	CreatedAt time.Time     `json:"createdAt"`
-	CreatedBy uuid.NullUUID `json:"createdBy"`
-	UpdatedAt null.Time     `json:"updatedAt"`
-	UpdatedBy uuid.NullUUID `json:"updatedBy"`
+	ID        uuid.UUID     `json:"id,omitzero"`
+	FirstName string        `json:"firstName,omitzero"`
+	LastName  null.String   `json:"lastName,omitzero"`
+	Origin    string        `json:"origin,omitzero"`
+	CreatedAt time.Time     `json:"createdAt,omitzero"`
+	CreatedBy uuid.NullUUID `json:"createdBy,omitzero"`
+	UpdatedAt null.Time     `json:"updatedAt,omitzero"`
+	UpdatedBy uuid.NullUUID `json:"updatedBy,omitzero"`
 	DeletedAt null.Time     `json:"deletedAt,omitzero"`
 	DeletedBy uuid.NullUUID `json:"deletedBy,omitzero"`
 }

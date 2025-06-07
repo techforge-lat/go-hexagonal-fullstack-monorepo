@@ -138,18 +138,19 @@ func (s SelectQuery) ToSQL() (Result, error) {
 	if len(s.requiredColumns) == 0 {
 		builder.WriteString(strings.Join(s.columns, ", "))
 	} else {
-		for i, col := range s.columns {
+		// Only select the required columns
+		selectedCols := make([]string, 0, len(s.requiredColumns))
+		for _, col := range s.columns {
 			if _, ok := s.requiredColumns[col]; ok {
-				builder.WriteString(col)
-			} else {
-				builder.WriteString("null ")
-				builder.WriteString("AS ")
-				builder.WriteString(col)
+				selectedCols = append(selectedCols, col)
 			}
-
-			if i < len(s.columns)-1 {
-				builder.WriteString(", ")
-			}
+		}
+		
+		if len(selectedCols) == 0 {
+			// Fallback to all columns if no valid required columns found
+			builder.WriteString(strings.Join(s.columns, ", "))
+		} else {
+			builder.WriteString(strings.Join(selectedCols, ", "))
 		}
 	}
 

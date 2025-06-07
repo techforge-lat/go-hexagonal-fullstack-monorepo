@@ -6,12 +6,12 @@ import (
 )
 
 // SetUserRoutes configures user-related API routes
-func SetUserRoutes(echoServer *server.EchoServer, userHandler *presentation.Handler) {
+func SetUserRoutes(echoServer *server.EchoServer, handler *presentation.Handler) {
 	group := echoServer.PublicAPI.Group("/users")
 
-	group.POST("", userHandler.Create)
-	group.PUT("", userHandler.Update)
-	group.DELETE("", userHandler.Delete)
-	group.GET("", userHandler.List)
-	group.GET("/find", userHandler.Find)
+	group.POST("", handler.Create)
+	group.PATCH("/:id", handler.Update)
+	group.DELETE("/:id", handler.Delete)
+	group.GET("/:id", handler.Find)
+	group.GET("", handler.List)
 }

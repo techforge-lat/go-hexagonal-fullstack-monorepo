@@ -6,6 +6,7 @@ import (
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
 	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,6 +26,8 @@ func New(configDB localconfig.DatabaseConfig) (*Adapter, error) {
 	if err != nil {
 		return nil, fault.Wrap(fmt.Errorf("unable to parse config connection: %w", err))
 	}
+
+	config.ConnConfig.Tracer = otelpgx.NewTracer(otelpgx.WithIncludeQueryParameters())
 
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {

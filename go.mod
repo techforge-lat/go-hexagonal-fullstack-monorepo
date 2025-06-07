@@ -31,6 +31,7 @@ require (
 require (
 	github.com/a-h/templ v0.3.894 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
+	github.com/exaring/otelpgx v0.9.3
 	github.com/georgysavva/scany v1.2.3
 	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-logr/logr v1.4.2 // indirect
