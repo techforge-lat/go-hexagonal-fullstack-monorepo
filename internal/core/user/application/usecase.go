@@ -62,7 +62,7 @@ func (uc UseCase) Update(ctx context.Context, req entity.UserUpdateRequest, filt
 		return fault.Wrap(err)
 	}
 
-	if err := uc.repo.Update(ctx, req); err != nil {
+	if err := uc.repo.Update(ctx, req, filters...); err != nil {
 		return fault.Wrap(err)
 	}
 
@@ -90,6 +90,24 @@ func (uc UseCase) List(ctx context.Context, criteria dafi.Criteria) (types.List[
 	result, err := uc.repo.List(ctx, criteria)
 	if err != nil {
 		return types.List[entity.User]{}, fault.Wrap(err)
+	}
+
+	return result, nil
+}
+
+func (uc UseCase) Exists(ctx context.Context, criteria dafi.Criteria) (bool, error) {
+	result, err := uc.repo.Exists(ctx, criteria)
+	if err != nil {
+		return false, fault.Wrap(err)
+	}
+
+	return result, nil
+}
+
+func (uc UseCase) Count(ctx context.Context, criteria dafi.Criteria) (int64, error) {
+	result, err := uc.repo.Count(ctx, criteria)
+	if err != nil {
+		return 0, fault.Wrap(err)
 	}
 
 	return result, nil

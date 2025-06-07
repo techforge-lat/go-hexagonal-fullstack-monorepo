@@ -180,6 +180,28 @@ type RepositoryQuery[M any] interface {
 	//   - []M: A collection of found entities
 	//   - error: Any error that occurred during the query
 	List(ctx context.Context, criteria dafi.Criteria) (types.List[M], error)
+
+	// Exists checks if any entity matches the given criteria.
+	//
+	// Parameters:
+	//   - ctx: Context for the operation
+	//   - criteria: Search criteria including filters
+	//
+	// Returns:
+	//   - bool: True if at least one entity matches the criteria
+	//   - error: Any error that occurred during the query
+	Exists(ctx context.Context, criteria dafi.Criteria) (bool, error)
+
+	// Count returns the number of entities matching the given criteria.
+	//
+	// Parameters:
+	//   - ctx: Context for the operation
+	//   - criteria: Search criteria including filters
+	//
+	// Returns:
+	//   - int64: The count of entities matching the criteria
+	//   - error: Any error that occurred during the query
+	Count(ctx context.Context, criteria dafi.Criteria) (int64, error)
 }
 
 // RepositoryQueryRelation extends RepositoryQuery with methods for handling related entities.

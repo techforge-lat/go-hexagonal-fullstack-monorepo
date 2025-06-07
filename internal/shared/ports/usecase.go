@@ -121,6 +121,8 @@ type UseCaseDelete interface {
 type UseCaseQuery[M any] interface {
 	UseCaseFind[M]             // For single entity queries
 	UseCaseList[types.List[M]] // For collection queries
+	UseCaseExists              // For existence checks
+	UseCaseCount               // For counting entities
 }
 
 // UseCaseQueryRelation extends UseCaseQuery to handle queries that include
@@ -202,4 +204,32 @@ type UseCaseListRelation[T any] interface {
 	//   - T: Collection of found entities with loaded relations
 	//   - error: Any error during the query process
 	ListRelation(ctx context.Context, criteria dafi.Criteria) (T, error)
+}
+
+// UseCaseExists defines the contract for checking entity existence.
+type UseCaseExists interface {
+	// Exists checks if any entity matches the given criteria.
+	//
+	// Parameters:
+	//   - ctx: Context for the operation
+	//   - criteria: Search criteria including filters
+	//
+	// Returns:
+	//   - bool: True if at least one entity matches the criteria
+	//   - error: Any error during the existence check
+	Exists(ctx context.Context, criteria dafi.Criteria) (bool, error)
+}
+
+// UseCaseCount defines the contract for counting entities.
+type UseCaseCount interface {
+	// Count returns the number of entities matching the given criteria.
+	//
+	// Parameters:
+	//   - ctx: Context for the operation
+	//   - criteria: Search criteria including filters
+	//
+	// Returns:
+	//   - int64: The count of entities matching the criteria
+	//   - error: Any error during the counting process
+	Count(ctx context.Context, criteria dafi.Criteria) (int64, error)
 }

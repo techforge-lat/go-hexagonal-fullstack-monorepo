@@ -11,6 +11,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"gopkg.in/guregu/null.v4"
 )
 
 type Repository struct {
@@ -63,6 +64,9 @@ func (r Repository) Create(ctx context.Context, entity entity.UserCreateRequest)
 		entity.CreatedAt.SetValid(time.Now())
 	}
 
+	if !entity.CreatedBy.Valid {
+	}
+
 	result, err := insertQuery.WithValues(entity.ID, entity.FirstName, entity.LastName, entity.Origin, entity.CreatedAt, entity.CreatedBy).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
@@ -80,6 +84,9 @@ func (r Repository) Update(ctx context.Context, entity entity.UserUpdateRequest,
 		entity.UpdatedAt.SetValid(time.Now())
 	}
 
+	if !entity.UpdatedBy.Valid {
+	}
+
 	result, err := updateQuery.WithValues(entity.FirstName, entity.LastName, entity.Origin, entity.UpdatedAt, entity.UpdatedBy).Where(filters...).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
@@ -93,6 +100,30 @@ func (r Repository) Update(ctx context.Context, entity entity.UserUpdateRequest,
 }
 
 func (r Repository) Delete(ctx context.Context, filters ...dafi.Filter) error {
+	// Perform soft delete by setting deleted_at timestamp
+	softDeleteReq := entity.UserDeleteRequest{
+		DeletedAt: null.TimeFrom(time.Now()),
+		// DeletedBy would be set by the application layer based on current user context
+	}
+
+	result, err := softDeleteQuery.Where(filters...).ToSQL()
+	if err != nil {
+		return fault.Wrap(err)
+	}
+
+	if _, err := r.conn().Exec(ctx, result.Sql, append([]any{
+		softDeleteReq.DeletedAt,
+		softDeleteReq.DeletedBy,
+	}, result.Args...)...); err != nil {
+		return fault.Wrap(err)
+	}
+
+	return nil
+}
+
+// HardDelete permanently removes records from the database
+// This should only be used in specific cases like data cleanup or GDPR compliance
+func (r Repository) HardDelete(ctx context.Context, filters ...dafi.Filter) error {
 	result, err := deleteQuery.Where(filters...).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
@@ -106,8 +137,14 @@ func (r Repository) Delete(ctx context.Context, filters ...dafi.Filter) error {
 }
 
 func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.User, error) {
+	// Add soft delete filter to exclude deleted records
+	filters := append(criteria.Filters, dafi.Filter{
+		Field:    "deletedAt",
+		Operator: dafi.IsNull,
+	})
+
 	result, err := selectQuery.
-		Where(criteria.Filters...).
+		Where(filters...).
 		OrderBy(criteria.Sorts...).
 		Limit(1).RequiredColumns(criteria.SelectColumns...).
 		ToSQL()
@@ -124,8 +161,14 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 }
 
 func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.List[entity.User], error) {
+	// Add soft delete filter to exclude deleted records
+	filters := append(criteria.Filters, dafi.Filter{
+		Field:    "deletedAt",
+		Operator: dafi.IsNull,
+	})
+
 	result, err := selectQuery.
-		Where(criteria.Filters...).
+		Where(filters...).
 		OrderBy(criteria.Sorts...).
 		Limit(criteria.Pagination.PageSize).
 		Page(criteria.Pagination.PageNumber).
@@ -141,6 +184,59 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 	}
 
 	return list, nil
+}
+
+func (r Repository) Exists(ctx context.Context, criteria dafi.Criteria) (bool, error) {
+	// Add soft delete filter to exclude deleted records
+	filters := append(criteria.Filters, dafi.Filter{
+		Field:    "deletedAt",
+		Operator: dafi.IsNull,
+	})
+
+	result, err := existsQuery.
+		Where(filters...).
+		Limit(1).
+		ToSQL()
+	if err != nil {
+		return false, fault.Wrap(err)
+	}
+
+	var exists int
+	row := r.conn().QueryRow(ctx, result.Sql, result.Args...)
+
+	if err := row.Scan(&exists); err != nil {
+		// If no rows found, EXISTS returns false
+		if err.Error() == "no rows in result set" {
+			return false, nil
+		}
+		return false, fault.Wrap(err)
+	}
+
+	return exists > 0, nil
+}
+
+func (r Repository) Count(ctx context.Context, criteria dafi.Criteria) (int64, error) {
+	// Add soft delete filter to exclude deleted records
+	filters := append(criteria.Filters, dafi.Filter{
+		Field:    "deletedAt",
+		Operator: dafi.IsNull,
+	})
+
+	result, err := countQuery.
+		Where(filters...).
+		ToSQL()
+	if err != nil {
+		return 0, fault.Wrap(err)
+	}
+
+	var count int64
+	row := r.conn().QueryRow(ctx, result.Sql, result.Args...)
+
+	if err := row.Scan(&count); err != nil {
+		return 0, fault.Wrap(err)
+	}
+
+	return count, nil
 }
 
 // conn returns the database connection to use

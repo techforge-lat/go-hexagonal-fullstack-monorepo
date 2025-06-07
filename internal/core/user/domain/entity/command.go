@@ -41,3 +41,9 @@ type UserUpdateRequest struct {
 func (c UserUpdateRequest) Validate() error {
 	return userSchema.Parse(c)
 }
+
+// UserDeleteRequest represents the request to soft delete a User
+type UserDeleteRequest struct {
+	DeletedAt null.Time     `json:"deletedAt"`
+	DeletedBy uuid.NullUUID `json:"-"`
+}
