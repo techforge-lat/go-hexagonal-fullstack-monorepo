@@ -256,6 +256,208 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /users-origin-enum:
+    post:
+      summary: Create a new users origin enum
+      description: Creates a new users origin enum with the provided information
+      operationId: createUsersOriginEnum
+      tags:
+        - UsersOriginEnum
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsersOriginEnumCreateRequest"
+            examples:
+              basic_users_origin_enum:
+                summary: Basic users origin enum creation
+                value:
+                  code: "web_signup"
+                  name: "Web Signup"
+      responses:
+        "201":
+          description: Users origin enum created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful creation
+                  value:
+                    type: "about:blank"
+                    title: "Recurso Creado"
+                    detail: "El recurso fue creado exitosamente"
+                    status: 201
+                    data:
+                      code: "web_signup"
+                      name: "Web Signup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    get:
+      summary: List users origin enums
+      description: Retrieves a list of users origin enums with optional filtering, sorting, and pagination
+      operationId: listUsersOriginEnums
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - $ref: "#/components/parameters/SelectParam"
+        - $ref: "#/components/parameters/PaginationParam"
+        - name: code
+          in: query
+          description: "Filter by code OR Sort by code. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "eq:web_signup"
+        - name: name
+          in: query
+          description: "Filter by name OR Sort by name. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "contains:Web"
+      responses:
+        "200":
+          description: List of users origin enums retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful list
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      - code: "web_signup"
+                        name: "Web Signup"
+                      - code: "mobile_app"
+                        name: "Mobile App"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users-origin-enum/{code}:
+    get:
+      summary: Get users origin enum by code
+      description: Retrieves a specific users origin enum by their code
+      operationId: getUsersOriginEnum
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Users origin enum code
+          schema:
+            type: string
+            example: "web_signup"
+        - $ref: "#/components/parameters/SelectParam"
+      responses:
+        "200":
+          description: Users origin enum retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful retrieval
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      code: "web_signup"
+                      name: "Web Signup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    patch:
+      summary: Update users origin enum
+      description: Updates an existing users origin enum with the provided information
+      operationId: updateUsersOriginEnum
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Users origin enum code
+          schema:
+            type: string
+            example: "web_signup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsersOriginEnumUpdateRequest"
+            examples:
+              partial_update:
+                summary: Partial users origin enum update
+                value:
+                  code: "web_registration"
+                  name: "Web Registration"
+      responses:
+        "200":
+          description: Users origin enum updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful update
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      code: "web_registration"
+                      name: "Web Registration"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      summary: Delete users origin enum
+      description: Soft deletes a users origin enum by their code
+      operationId: deleteUsersOriginEnum
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Users origin enum code
+          schema:
+            type: string
+            example: "web_signup"
+      responses:
+        "204":
+          description: Users origin enum deleted successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   schemas:
     User:
@@ -391,6 +593,65 @@ components:
           description: Update timestamp
           example: "2023-01-02T00:00:00Z"
 
+    UsersOriginEnum:
+      type: object
+      description: Users origin enum entity with all fields
+      properties:
+        code:
+          type: string
+          description: Unique code identifier for the origin type
+          minLength: 1
+          maxLength: 50
+          example: "web_signup"
+        name:
+          type: string
+          description: Human-readable name for the origin type
+          minLength: 1
+          maxLength: 100
+          example: "Web Signup"
+      required:
+        - code
+        - name
+
+    UsersOriginEnumCreateRequest:
+      type: object
+      description: Request payload for creating a new users origin enum
+      properties:
+        code:
+          type: string
+          description: Unique code identifier for the origin type
+          minLength: 1
+          maxLength: 50
+          example: "web_signup"
+        name:
+          type: string
+          description: Human-readable name for the origin type
+          minLength: 1
+          maxLength: 100
+          example: "Web Signup"
+      required:
+        - code
+        - name
+
+    UsersOriginEnumUpdateRequest:
+      type: object
+      description: Request payload for updating a users origin enum
+      properties:
+        code:
+          type: string
+          nullable: true
+          description: Unique code identifier for the origin type
+          minLength: 1
+          maxLength: 50
+          example: "web_registration"
+        name:
+          type: string
+          nullable: true
+          description: Human-readable name for the origin type
+          minLength: 1
+          maxLength: 100
+          example: "Web Registration"
+
     ApiResponse:
       type: object
       description: Standard API response following RFC 9457 Problem Details
@@ -424,6 +685,12 @@ components:
                 $ref: "#/components/schemas/User"
             - $ref: "#/components/schemas/UserCreateRequest"
             - $ref: "#/components/schemas/UserUpdateRequest"
+            - $ref: "#/components/schemas/UsersOriginEnum"
+            - type: array
+              items:
+                $ref: "#/components/schemas/UsersOriginEnum"
+            - $ref: "#/components/schemas/UsersOriginEnumCreateRequest"
+            - $ref: "#/components/schemas/UsersOriginEnumUpdateRequest"
 
     ErrorResponse:
       type: object
@@ -558,3 +825,5 @@ components:
 tags:
   - name: Users
     description: User management operations
+  - name: UsersOriginEnum
+    description: Users origin enum management operations
