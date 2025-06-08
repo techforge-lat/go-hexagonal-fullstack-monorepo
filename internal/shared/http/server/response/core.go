@@ -1,8 +1,11 @@
 package response
 
 import (
+	"errors"
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
 	"net/http"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const DefaultProblemType = "about:blank"
@@ -104,8 +107,8 @@ func Ok[T any](data T) *Response[T] {
 func Created[T any](data T) *Response[T] {
 	return &Response[T]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Resource Created",
-		DetailText: "The resource was successfully created",
+		TitleText:  "Recurso Creado",
+		DetailText: "El recurso fue creado exitosamente",
 		StatusCode: http.StatusCreated,
 		DataValue:  data,
 	}
@@ -115,6 +118,10 @@ func Created[T any](data T) *Response[T] {
 func FromError(err *fault.Error) *Response[any] {
 	if err == nil {
 		return InternalError()
+	}
+
+	if errors.Is(err.Cause, pgx.ErrNoRows) {
+		return NotFound()
 	}
 
 	response := &Response[any]{
@@ -162,8 +169,8 @@ func FromError(err *fault.Error) *Response[any] {
 func NotFound() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Resource Not Found",
-		DetailText: "The requested resource could not be found",
+		TitleText:  "Recurso No Encontrado",
+		DetailText: "El recurso solicitado no pudo ser encontrado",
 		StatusCode: http.StatusNotFound,
 	}
 }
@@ -172,8 +179,8 @@ func NotFound() *Response[any] {
 func BadRequest() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Bad Request",
-		DetailText: "The request is invalid or malformed",
+		TitleText:  "Solicitud Incorrecta",
+		DetailText: "La solicitud es inválida o está mal formada",
 		StatusCode: http.StatusBadRequest,
 	}
 }
@@ -182,8 +189,8 @@ func BadRequest() *Response[any] {
 func Unauthorized() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Unauthorized",
-		DetailText: "Authentication is required to access this resource",
+		TitleText:  "No Autorizado",
+		DetailText: "Se requiere autenticación para acceder a este recurso",
 		StatusCode: http.StatusUnauthorized,
 	}
 }
@@ -192,8 +199,8 @@ func Unauthorized() *Response[any] {
 func Forbidden() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Forbidden",
-		DetailText: "You do not have permission to access this resource",
+		TitleText:  "Prohibido",
+		DetailText: "No tienes permisos para acceder a este recurso",
 		StatusCode: http.StatusForbidden,
 	}
 }
@@ -202,8 +209,8 @@ func Forbidden() *Response[any] {
 func InternalError() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Internal Server Error",
-		DetailText: "An unexpected error occurred on the server",
+		TitleText:  "Error Interno del Servidor",
+		DetailText: "Ocurrió un error inesperado en el servidor",
 		StatusCode: http.StatusInternalServerError,
 	}
 }
@@ -212,8 +219,8 @@ func InternalError() *Response[any] {
 func UnprocessableEntity() *Response[any] {
 	return &Response[any]{
 		TypeURI:    DefaultProblemType,
-		TitleText:  "Validation Failed",
-		DetailText: "The provided data failed validation requirements",
+		TitleText:  "Validación Fallida",
+		DetailText: "Los datos proporcionados no cumplen con los requisitos de validación",
 		StatusCode: http.StatusUnprocessableEntity,
 	}
 }
