@@ -25,7 +25,11 @@ type UserCreateRequest struct {
 
 // Validate validates the fields of UserCreateRequest
 func (c UserCreateRequest) Validate() error {
-	return userSchema.Parse(c)
+	result := userSchema.Parse(c)
+	if !result.Success {
+		return result.Errors[0] // Return first error for simplicity
+	}
+	return nil
 }
 
 // UserUpdateRequest represents the request to update a User
@@ -39,7 +43,11 @@ type UserUpdateRequest struct {
 
 // Validate validates the fields of UserUpdateRequest
 func (c UserUpdateRequest) Validate() error {
-	return userSchema.Parse(c)
+	result := userSchema.Parse(c)
+	if !result.Success {
+		return result.Errors[0] // Return first error for simplicity
+	}
+	return nil
 }
 
 // UserDeleteRequest represents the request to soft delete a User

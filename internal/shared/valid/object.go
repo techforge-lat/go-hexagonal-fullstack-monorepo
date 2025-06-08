@@ -25,6 +25,11 @@ func (o *ObjectSchema) Parse(value any) *Result {
 }
 
 func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
+	// Skip all validations for null library types that are not valid
+	if isNullLibraryType(value) {
+		return newResult(true, value, nil)
+	}
+
 	if o.optional && isNilOrEmpty(value) {
 		return newResult(true, value, nil)
 	}
@@ -56,6 +61,49 @@ func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
 			fieldPath = path + "." + fieldName
 		}
 
+		// Check if the original value in the struct is a null library type that is not valid
+		shouldSkipValidation := false
+		originalValue := reflect.ValueOf(value)
+		if originalValue.Kind() == reflect.Ptr {
+			originalValue = originalValue.Elem()
+		}
+		if originalValue.Kind() == reflect.Struct {
+			// Find struct field by JSON tag or field name
+			structType := originalValue.Type()
+			for i := 0; i < structType.NumField(); i++ {
+				field := structType.Field(i)
+				jsonTag := field.Tag.Get("json")
+				structFieldName := field.Name
+				
+				if jsonTag != "" && jsonTag != "-" {
+					if commaIndex := len(jsonTag); commaIndex > 0 {
+						for j, r := range jsonTag {
+							if r == ',' {
+								commaIndex = j
+								break
+							}
+						}
+						structFieldName = jsonTag[:commaIndex]
+					}
+				}
+				
+				if structFieldName == fieldName {
+					structFieldValue := originalValue.Field(i)
+					if structFieldValue.CanInterface() {
+						originalFieldValue := structFieldValue.Interface()
+						if isNullLibraryType(originalFieldValue) {
+							shouldSkipValidation = true
+						}
+					}
+					break
+				}
+			}
+		}
+		
+		if shouldSkipValidation {
+			continue
+		}
+
 		var result *Result
 		if stringSchema, ok := fieldSchema.(*StringSchema); ok {
 			result = stringSchema.parseWithPath(fieldValue, fieldPath)
@@ -74,7 +122,10 @@ func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
 
 		if result.HasErrors() {
 			allErrors = append(allErrors, result.Errors...)
-		} else if exists || result.Data != nil {
+			continue
+		}
+		
+		if exists || result.Data != nil {
 			validatedData[fieldName] = result.Data
 		}
 	}

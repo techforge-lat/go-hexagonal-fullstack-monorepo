@@ -31,6 +31,11 @@ func (n *NumberSchema) Parse(value interface{}) *Result {
 }
 
 func (n *NumberSchema) parseWithPath(value interface{}, path string) *Result {
+	// Skip all validations for null library types that are not valid
+	if isNullLibraryType(value) {
+		return newResult(true, value, nil)
+	}
+
 	if n.optional && isNilOrEmpty(value) {
 		return newResult(true, value, nil)
 	}

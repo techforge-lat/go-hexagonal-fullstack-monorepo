@@ -26,6 +26,13 @@ type ValidationError struct {
 	Code    string
 }
 
+func (e ValidationError) Error() string {
+	if e.Path != "" {
+		return e.Path + ": " + e.Message
+	}
+	return e.Message
+}
+
 type CustomValidatorFunc func(value any) error
 
 type baseSchema struct {
@@ -105,6 +112,25 @@ func isNilOrEmpty(value any) bool {
 	default:
 		return false
 	}
+}
+
+// isNullLibraryType checks if the value is a null library type that is not valid
+func isNullLibraryType(value any) bool {
+	switch v := value.(type) {
+	case null.String:
+		return !v.Valid
+	case null.Int:
+		return !v.Valid
+	case null.Float:
+		return !v.Valid
+	case null.Bool:
+		return !v.Valid
+	case null.Time:
+		return !v.Valid
+	case uuid.NullUUID:
+		return !v.Valid
+	}
+	return false
 }
 
 func newResult(success bool, data any, errors []ValidationError) *Result {
