@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"go-hexagonal-fullstack-monorepo/internal/core/user/domain/entity"
 	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
@@ -43,7 +42,7 @@ func (r Repository) CreateBulk(ctx context.Context, entities types.List[entity.U
 			entity.CreatedAt.SetValid(time.Now())
 		}
 
-		query = query.WithValues(entity.ID, entity.FirstName, entity.LastName, entity.Origin, entity.CreatedAt, entity.CreatedBy)
+		query = query.WithValues(entity.ID, entity.FirstName, entity.LastName, entity.Origin, entity.Picture, entity.CreatedAt, entity.CreatedBy)
 	}
 
 	result, err := query.ToSQL()
@@ -69,7 +68,7 @@ func (r Repository) Create(ctx context.Context, entity entity.UserCreateRequest)
 	if !entity.CreatedBy.Valid {
 	}
 
-	result, err := insertQuery.WithValues(entity.ID, entity.FirstName, entity.LastName, entity.Origin, entity.CreatedAt, entity.CreatedBy).ToSQL()
+	result, err := insertQuery.WithValues(entity.ID, entity.FirstName, entity.LastName, entity.Origin, entity.Picture, entity.CreatedAt, entity.CreatedBy).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
 	}
@@ -89,7 +88,7 @@ func (r Repository) Update(ctx context.Context, entity entity.UserUpdateRequest,
 	if !entity.UpdatedBy.Valid {
 	}
 
-	result, err := updateQuery.WithValues(entity.FirstName, entity.LastName, entity.Origin, entity.UpdatedAt, entity.UpdatedBy).Where(filters...).ToSQL()
+	result, err := updateQuery.WithValues(entity.FirstName, entity.LastName, entity.Origin, entity.Picture, entity.UpdatedAt, entity.UpdatedBy).Where(filters...).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
 	}
@@ -108,15 +107,12 @@ func (r Repository) Delete(ctx context.Context, filters ...dafi.Filter) error {
 		// DeletedBy would be set by the application layer based on current user context
 	}
 
-	result, err := softDeleteQuery.Where(filters...).ToSQL()
+	result, err := softDeleteQuery.WithValues(softDeleteReq.DeletedAt, softDeleteReq.DeletedBy).Where(filters...).ToSQL()
 	if err != nil {
 		return fault.Wrap(err)
 	}
 
-	if _, err := r.conn().Exec(ctx, result.Sql, append([]any{
-		softDeleteReq.DeletedAt,
-		softDeleteReq.DeletedBy,
-	}, result.Args...)...); err != nil {
+	if _, err := r.conn().Exec(ctx, result.Sql, result.Args...); err != nil {
 		return fault.Wrap(err)
 	}
 
@@ -149,7 +145,7 @@ func (r Repository) Find(ctx context.Context, criteria dafi.Criteria) (entity.Us
 		Value:    nil,
 	})
 
-	query := sqlcraft.Select("id", "first_name", "last_name", "origin", "created_at", "created_by", "updated_at", "updated_by", "deleted_at", "deleted_by").From(table).SQLColumnByDomainField(sqlColumnByDomainField)
+	query := sqlcraft.Select(selectAllColumns...).From(table).SQLColumnByDomainField(sqlColumnByDomainField)
 	result, err := query.
 		Where(filters...).
 		OrderBy(criteria.Sorts...).
@@ -178,7 +174,7 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 		Value:    nil,
 	})
 
-	query := sqlcraft.Select("id", "first_name", "last_name", "origin", "created_at", "created_by", "updated_at", "updated_by", "deleted_at", "deleted_by").From(table).SQLColumnByDomainField(sqlColumnByDomainField)
+	query := sqlcraft.Select(selectAllColumns...).From(table).SQLColumnByDomainField(sqlColumnByDomainField)
 	result, err := query.
 		Where(filters...).
 		OrderBy(criteria.Sorts...).
@@ -189,9 +185,6 @@ func (r Repository) List(ctx context.Context, criteria dafi.Criteria) (types.Lis
 	if err != nil {
 		return nil, fault.Wrap(err)
 	}
-
-	fmt.Println("DEBUG: ", result.Sql)
-	fmt.Println("SELECT: ", criteria.SelectColumns)
 
 	var list types.List[entity.User]
 	if err := pgxscan.Select(ctx, r.conn(), &list, result.Sql, result.Args...); err != nil {

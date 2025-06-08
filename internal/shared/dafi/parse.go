@@ -69,6 +69,7 @@ func (p *QueryParser) parseValues(key string, values []string, criteria *Criteri
 			if err := p.parseSelect(value, criteria); err != nil {
 				return err
 			}
+
 			continue
 		}
 

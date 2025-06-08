@@ -8,7 +8,6 @@ import (
 	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
 	"go-hexagonal-fullstack-monorepo/internal/shared/telemetry"
-	"net"
 	"net/http"
 	"time"
 
@@ -91,10 +90,10 @@ func NewEchoServer(params ServerParams, lc fx.Lifecycle) *EchoServer {
 					}
 				}
 
-				// Set base context
-				api.Server.BaseContext = func(listener net.Listener) context.Context {
-					return ctx
-				}
+				// // Set base context
+				// api.Server.BaseContext = func(listener net.Listener) context.Context {
+				// 	return ctx
+				// }
 
 				params.Logger.Info(ctx, "starting HTTP server", "port", params.Config.HTTP.Port)
 				if err := api.Start(fmt.Sprintf(":%d", params.Config.HTTP.Port)); err != nil && err != http.ErrServerClosed {
@@ -121,12 +120,8 @@ func NewEchoServer(params ServerParams, lc fx.Lifecycle) *EchoServer {
 }
 
 func healthCheckHandler(c echo.Context, database ports.Database) error {
-	// Use a fresh context with reasonable timeout instead of HTTP request context
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	if database != nil {
-		if err := database.Ping(ctx); err != nil {
+		if err := database.Ping(c.Request().Context()); err != nil {
 			return c.JSON(http.StatusServiceUnavailable, map[string]any{
 				"status": "unhealthy",
 				"error":  "database connection failed",

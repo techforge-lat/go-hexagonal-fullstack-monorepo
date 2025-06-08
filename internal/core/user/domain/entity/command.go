@@ -19,6 +19,7 @@ type UserCreateRequest struct {
 	FirstName string        `json:"firstName"`
 	LastName  null.String   `json:"lastName"`
 	Origin    string        `json:"origin"`
+	Picture   null.String   `json:"picture"`
 	CreatedAt null.Time     `json:"createdAt"`
 	CreatedBy uuid.NullUUID `json:"-"`
 }
@@ -37,6 +38,7 @@ type UserUpdateRequest struct {
 	FirstName null.String   `json:"firstName"`
 	LastName  null.String   `json:"lastName"`
 	Origin    null.String   `json:"origin"`
+	Picture   null.String   `json:"picture"`
 	UpdatedAt null.Time     `json:"updatedAt"`
 	UpdatedBy uuid.NullUUID `json:"-"`
 }

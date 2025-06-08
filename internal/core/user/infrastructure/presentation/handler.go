@@ -4,6 +4,7 @@ import (
 	"go-hexagonal-fullstack-monorepo/internal/core/user/domain/entity"
 	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/request"
 	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
 	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
 	"net/http"
@@ -34,6 +35,7 @@ func (h Handler) Create(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return fault.Wrap(err).Code(fault.UnprocessableEntity)
 	}
+	req.CreatedBy = request.GetLoggedUserID(c)
 
 	if err := h.useCase.Create(c.Request().Context(), req); err != nil {
 		return fault.Wrap(err)
@@ -47,6 +49,7 @@ func (h Handler) Update(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return fault.Wrap(err).Code(fault.UnprocessableEntity)
 	}
+	req.UpdatedBy = request.GetLoggedUserID(c)
 
 	criteria, err := dafi.NewQueryParser().Parse(c.QueryParams())
 	if err != nil {

@@ -12,6 +12,7 @@ type User struct {
 	FirstName string        `json:"firstName,omitzero"`
 	LastName  null.String   `json:"lastName,omitzero"`
 	Origin    string        `json:"origin,omitzero"`
+	Picture   null.String   `json:"picture,omitzero"`
 	CreatedAt time.Time     `json:"createdAt,omitzero"`
 	CreatedBy uuid.NullUUID `json:"createdBy,omitzero"`
 	UpdatedAt null.Time     `json:"updatedAt,omitzero"`

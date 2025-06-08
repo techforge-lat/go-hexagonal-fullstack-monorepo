@@ -4,75 +4,119 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Go hexagonal architecture starter template within a monorepo structure. The project uses Go 1.24.3 and is designed to support multiple applications (api, cms, wizard) with a shared core and infrastructure.
+This is a Go hexagonal architecture monorepo using Go 1.24.3 with multiple applications (api, cms, wizard) sharing core business logic and infrastructure. The project uses Uber Fx for dependency injection and includes comprehensive observability tooling.
 
 ## Architecture
 
 ### Hexagonal Architecture Structure
 
-- `internal/core/`: Domain logic and business rules (currently empty - to be implemented)
-- `internal/shared/`: Shared infrastructure and utilities
-- `cmd/`: Application entry points for different services (api, cms, wizard)
+- `internal/core/`: Domain modules (e.g., `user/`) with application, domain, and infrastructure layers
+- `internal/shared/`: Shared infrastructure and utilities across all applications
+- `cmd/`: Application entry points using fx.New() for dependency injection
 
-### Key Shared Components
+### Key Dependencies
 
-- **Fault Handling**: Custom error tracing system at `internal/shared/fault/` with HTTP status code mapping and enhanced error context
-- **HTTP Server**: Echo-based server setup in `internal/shared/http/server/`
-- **Database**: PostgreSQL connection and health checks in `internal/shared/repository/postgres/`
-- **Configuration**: Local config management in `internal/shared/localconfig/`
-- **Logging**: Centralized logging in `internal/shared/logger/`
+- **Dependency Injection**: Uber Fx (`go.uber.org/fx`) - all modules export fx.Module
+- **HTTP Framework**: Echo (`github.com/labstack/echo/v4`) with OpenTelemetry instrumentation
+- **Database**: PostgreSQL with pgx driver (`github.com/jackc/pgx/v5`) and Scany for scanning
+- **Templates**: Templ (`github.com/a-h/templ`) for type-safe HTML templates
+- **Observability**: OpenTelemetry, Grafana stack (Loki, Tempo, Promtail)
+
+### Core Module Pattern
+
+Each domain module follows this structure:
+- `application/`: Use cases and business logic
+- `domain/`: Entities, commands, and queries
+- `infrastructure/presentation/`: HTTP handlers
+- `infrastructure/repository/`: Data persistence
+- `module.go`: Fx module definition with dependency wiring
 
 ## Development Commands
 
-Since the Makefile and docker-compose.yaml are currently empty, use standard Go commands:
+### Using Makefile (Recommended)
 
 ```bash
-# Build the project
-go build ./...
+# Complete development workflow
+make all                    # Format, test, lint, and build
 
-# Run tests
-go test ./...
+# Individual tasks
+make fmt                    # Format code
+make test                   # Run tests with race detection
+make test-cover             # Run tests with coverage
+make vet                    # Run go vet
+make build                  # Build project
+make tidy                   # Tidy modules
+make vulnerability          # Check for vulnerabilities
 
-# Run tests with coverage
-go test -cover ./...
+# Database migrations
+make migration-create name=migration_name
+make migration-up count=1
+make migration-down count=1
 
-# Run a specific test
-go test ./internal/shared/fault/
+# Run applications
+make run-api               # Start API server
+make run-cms               # Start CMS server
+make run-wizard           # Start wizard application
 
-# Format code
-go fmt ./...
-
-# Vet code
-go vet ./...
-
-# Tidy dependencies
-go mod tidy
+# Setup
+make setup                # Install tools and create directories
 ```
 
-## Application Structure
+### Direct Go Commands
 
-The project supports multiple applications through the `cmd/` directory:
+```bash
+# Run specific tests
+go test ./internal/shared/fault/
+go test -run TestSpecificFunction ./internal/core/user/
 
-- `cmd/api/`: API server application
-- `cmd/cms/`: CMS application
-- `cmd/wizard/`: Wizard application
-- `cmd/runner.go`: Shared runner functionality
+# Run applications directly
+go run ./cmd/api
+go run ./cmd/cms
+```
 
-## Error Handling
+## Custom Packages
 
-This project uses a custom fault package for enhanced error handling:
+### DAFI (Data Access and Filtering Interface)
 
-- Location: `internal/shared/fault/`
-- Provides error tracing with caller information
-- Maps errors to HTTP status codes
-- Supports chaining errors with metadata
-- See `internal/shared/fault/README.md` for detailed usage
+Location: `internal/shared/dafi/`
+- Fluent query builder for filtering, sorting, and pagination
+- Usage: `dafi.Where("name", dafi.Equals, "John").SortBy("created_at", dafi.DESC).Limit(10)`
 
-## Infrastructure
+### SQLCraft
 
-- Database: PostgreSQL (connection setup in `internal/shared/repository/postgres/`)
-- HTTP Framework: Echo (server setup in `internal/shared/http/server/`)
-- Observability: Ready for Grafana, Loki, Tempo, and OpenTelemetry (config files in `devops/`)
+Location: `internal/shared/sqlcraft/`
+- SQL query builder with type safety
+- Supports SELECT, INSERT, UPDATE, DELETE operations
+
+### Fault Package
+
+Location: `internal/shared/fault/`
+- Enhanced error handling with caller tracing
+- HTTP status code mapping
+- Error chaining with metadata
+
+## Infrastructure Services
+
+### Database Setup
+
+```bash
+# Start PostgreSQL and pgAdmin
+docker-compose up database pgadmin
+
+# Run migrations
+make migration-up
+```
+
+### Observability Stack
+
+```bash
+# Start full observability stack
+docker-compose up grafana tempo loki promtail collector
+
+# Access services
+# Grafana: http://localhost:3000
+# pgAdmin: http://localhost:8888
+```
 
 ## Git
 

@@ -74,14 +74,37 @@ paths:
         - Users
       parameters:
         - $ref: "#/components/parameters/SelectParam"
-        - $ref: "#/components/parameters/FirstNameFilterParam"
-        - $ref: "#/components/parameters/LastNameFilterParam"
-        - $ref: "#/components/parameters/OriginFilterParam"
-        - $ref: "#/components/parameters/CreatedAtFilterParam"
-        - $ref: "#/components/parameters/PictureFilterParam"
-        - $ref: "#/components/parameters/FirstNameSortParam"
-        - $ref: "#/components/parameters/CreatedAtSortParam"
         - $ref: "#/components/parameters/PaginationParam"
+        - name: firstName
+          in: query
+          description: "Filter by firstName OR Sort by firstName. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "eq:John"
+        - name: lastName
+          in: query
+          description: "Filter by lastName OR Sort by lastName. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "eq:Doe"
+        - name: origin
+          in: query
+          description: "Filter by origin OR Sort by origin. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "in:web_signup,mobile_app"
+        - name: picture
+          in: query
+          description: "Filter by picture OR Sort by picture. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "contains:avatar"
+        - name: createdAt
+          in: query
+          description: "Filter by createdAt OR Sort by createdAt. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "gte:2023-01-01T00:00:00Z"
       responses:
         "200":
           description: List of users retrieved successfully
@@ -122,6 +145,7 @@ paths:
             type: string
             format: uuid
             example: "123e4567-e89b-12d3-a456-426614174000"
+        - $ref: "#/components/parameters/SelectParam"
       responses:
         "200":
           description: User retrieved successfully
@@ -445,91 +469,28 @@ components:
         type: string
         example: "id,firstName,lastName"
 
-    FirstNameFilterParam:
-      name: firstName
-      in: query
-      description: |
-        Filter by firstName. Format: operator:value[:chaining]
-        Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn
-        Chaining: and (default), or
-      schema:
-        type: string
-        example: "eq:John"
-
-    LastNameFilterParam:
-      name: lastName
-      in: query
-      description: |
-        Filter by lastName. Format: operator:value[:chaining]
-        Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn
-        Chaining: and (default), or
-      schema:
-        type: string
-        example: "eq:Doe"
-
-    OriginFilterParam:
-      name: origin
-      in: query
-      description: |
-        Filter by origin. Format: operator:value[:chaining]
-        Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn
-        Chaining: and (default), or
-      schema:
-        type: string
-        example: "in:web_signup,mobile_app"
-
-    CreatedAtFilterParam:
-      name: createdAt
-      in: query
-      description: |
-        Filter by createdAt. Format: operator:value[:chaining]
-        Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn
-        Chaining: and (default), or
-      schema:
-        type: string
-        example: "gte:2023-01-01T00:00:00Z"
-
-    PictureFilterParam:
-      name: picture
-      in: query
-      description: |
-        Filter by picture. Format: operator:value[:chaining]
-        Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn
-        Chaining: and (default), or
-      schema:
-        type: string
-        example: "contains:avatar"
-
-    FirstNameSortParam:
-      name: firstName
-      in: query
-      description: |
-        Sort by firstName. Format: sort:direction
-        Direction: asc, desc
-      schema:
-        type: string
-        example: "sort:asc"
-
-    CreatedAtSortParam:
-      name: createdAt
-      in: query
-      description: |
-        Sort by createdAt. Format: sort:direction
-        Direction: asc, desc
-      schema:
-        type: string
-        example: "sort:desc"
-
     PaginationParam:
-      name: pagination
+      name: x
       in: query
       description: |
-        Pagination parameters. Format: page:number,limit:size
+        Pagination parameters. Format: page:number or limit:size
         Controls page number and page size for results.
+        Multiple x parameters can be provided for different pagination settings.
+        
+        **Examples**:
+        - `x=page:1` - Get page 1
+        - `x=limit:10` - 10 items per page
+        - Multiple: `x=page:2&x=limit:20` - Page 2 with 20 items
       schema:
         type: array
         items:
           type: string
+          enum: 
+            - "page:1"
+            - "page:2"
+            - "limit:10"
+            - "limit:20"
+            - "limit:50"
         example: ["page:1", "limit:10"]
 
   responses:

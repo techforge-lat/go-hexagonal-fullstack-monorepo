@@ -2,11 +2,10 @@ package sqlcraft
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
 	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"strconv"
+	"strings"
 )
 
 type JoinType string
@@ -128,6 +127,8 @@ func (s SelectQuery) ToSQL() (Result, error) {
 			requiredCols[requiredSqlColumn] = struct{}{}
 		}
 
+		fmt.Println("SELECT 2: ", s.columns)
+		fmt.Println("SELECT 3: ", requiredCols)
 		s.requiredColumns = requiredCols
 	}
 
@@ -145,7 +146,7 @@ func (s SelectQuery) ToSQL() (Result, error) {
 				selectedCols = append(selectedCols, col)
 			}
 		}
-		
+
 		if len(selectedCols) == 0 {
 			// Fallback to all columns if no valid required columns found
 			builder.WriteString(strings.Join(s.columns, ", "))
