@@ -31,6 +31,8 @@ Each domain module follows this structure:
 - `infrastructure/repository/`: Data persistence
 - `module.go`: Fx module definition with dependency wiring
 
+**IMPORTANT**: When creating new modules, always refer to `MODULE_CREATION_GUIDE.md` for detailed step-by-step instructions and architectural guidelines. This guide contains critical requirements for AI implementation and ensures strict adherence to the provided database schema.
+
 ## Development Commands
 
 ### Using Makefile (Recommended)

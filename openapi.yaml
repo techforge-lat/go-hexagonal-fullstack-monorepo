@@ -458,6 +458,248 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /email-credentials:
+    post:
+      summary: Create a new email credentials
+      description: Creates a new email credentials with the provided information
+      operationId: createEmailCredentials
+      tags:
+        - EmailCredentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailCredentialsCreateRequest"
+            examples:
+              basic_email_credentials:
+                summary: Basic email credentials creation
+                value:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  userId: "456e7890-e89b-12d3-a456-426614174000"
+                  email: "user@example.com"
+                  passwordHash: "$2a$10$..."
+                  isVerified: false
+                  createdAt: "2023-01-01T00:00:00Z"
+      responses:
+        "201":
+          description: Email credentials created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful creation
+                  value:
+                    type: "about:blank"
+                    title: "Recurso Creado"
+                    detail: "El recurso fue creado exitosamente"
+                    status: 201
+                    data:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      userId: "456e7890-e89b-12d3-a456-426614174000"
+                      email: "user@example.com"
+                      isVerified: false
+                      createdAt: "2023-01-01T00:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    get:
+      summary: List email credentials
+      description: Retrieves a list of email credentials with optional filtering, sorting, and pagination
+      operationId: listEmailCredentials
+      tags:
+        - EmailCredentials
+      parameters:
+        - $ref: "#/components/parameters/SelectParam"
+        - $ref: "#/components/parameters/PaginationParam"
+        - name: userId
+          in: query
+          description: "Filter by userId OR Sort by userId. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "eq:456e7890-e89b-12d3-a456-426614174000"
+        - name: email
+          in: query
+          description: "Filter by email OR Sort by email. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "contains:example.com"
+        - name: isVerified
+          in: query
+          description: "Filter by isVerified OR Sort by isVerified. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "eq:true"
+        - name: createdAt
+          in: query
+          description: "Filter by createdAt OR Sort by createdAt. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "gte:2023-01-01T00:00:00Z"
+        - name: updatedAt
+          in: query
+          description: "Filter by updatedAt OR Sort by updatedAt. Filter format: operator:value[:chaining]. Sort format: sort:direction. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or. Direction: asc, desc"
+          schema:
+            type: string
+            example: "gte:2023-01-01T00:00:00Z"
+      responses:
+        "200":
+          description: List of email credentials retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful list
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      - id: "123e4567-e89b-12d3-a456-426614174000"
+                        userId: "456e7890-e89b-12d3-a456-426614174000"
+                        email: "user@example.com"
+                        isVerified: true
+                        createdAt: "2023-01-01T00:00:00Z"
+                      - id: "789e0123-e89b-12d3-a456-426614174000"
+                        userId: "012e3456-e89b-12d3-a456-426614174000"
+                        email: "user2@example.com"
+                        isVerified: false
+                        createdAt: "2023-01-02T00:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /email-credentials/{id}:
+    get:
+      summary: Get email credentials by ID
+      description: Retrieves specific email credentials by their ID
+      operationId: getEmailCredentials
+      tags:
+        - EmailCredentials
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Email credentials ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - $ref: "#/components/parameters/SelectParam"
+      responses:
+        "200":
+          description: Email credentials retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful retrieval
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      userId: "456e7890-e89b-12d3-a456-426614174000"
+                      email: "user@example.com"
+                      isVerified: true
+                      createdAt: "2023-01-01T00:00:00Z"
+                      updatedAt: "2023-01-02T00:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    patch:
+      summary: Update email credentials
+      description: Updates existing email credentials with the provided information
+      operationId: updateEmailCredentials
+      tags:
+        - EmailCredentials
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Email credentials ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailCredentialsUpdateRequest"
+            examples:
+              partial_update:
+                summary: Partial email credentials update
+                value:
+                  email: "newemail@example.com"
+                  isVerified: true
+                  updatedAt: "2023-01-02T00:00:00Z"
+      responses:
+        "200":
+          description: Email credentials updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: Successful update
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      email: "newemail@example.com"
+                      isVerified: true
+                      updatedAt: "2023-01-02T00:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      summary: Delete email credentials
+      description: Deletes email credentials by their ID
+      operationId: deleteEmailCredentials
+      tags:
+        - EmailCredentials
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Email credentials ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        "204":
+          description: Email credentials deleted successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   schemas:
     User:
@@ -652,6 +894,129 @@ components:
           maxLength: 100
           example: "Web Registration"
 
+    EmailCredentials:
+      type: object
+      description: Email credentials entity with all fields
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the email credentials
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          description: Reference to the user
+          example: "456e7890-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: Email address of the user
+          minLength: 1
+          maxLength: 255
+          example: "user@example.com"
+        passwordHash:
+          type: string
+          nullable: true
+          description: Hashed password for email authentication
+          maxLength: 255
+          example: "$2a$10$..."
+        isVerified:
+          type: boolean
+          description: Whether the email address has been verified
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the email credential was created
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the email credential was last updated
+          example: "2023-01-02T00:00:00Z"
+      required:
+        - id
+        - userId
+        - email
+        - isVerified
+        - createdAt
+
+    EmailCredentialsCreateRequest:
+      type: object
+      description: Request payload for creating new email credentials
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Email credentials ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          description: Reference to the user
+          example: "456e7890-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: Email address of the user
+          minLength: 1
+          maxLength: 255
+          example: "user@example.com"
+        passwordHash:
+          type: string
+          nullable: true
+          description: Hashed password for email authentication
+          maxLength: 255
+          example: "$2a$10$..."
+        isVerified:
+          type: boolean
+          description: Whether the email address has been verified
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Creation timestamp
+          example: "2023-01-01T00:00:00Z"
+      required:
+        - userId
+        - email
+
+    EmailCredentialsUpdateRequest:
+      type: object
+      description: Request payload for updating email credentials
+      properties:
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference to the user
+          example: "456e7890-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          nullable: true
+          description: Email address of the user
+          minLength: 1
+          maxLength: 255
+          example: "newemail@example.com"
+        passwordHash:
+          type: string
+          nullable: true
+          description: Hashed password for email authentication
+          maxLength: 255
+          example: "$2a$10$..."
+        isVerified:
+          type: boolean
+          nullable: true
+          description: Whether the email address has been verified
+          example: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Update timestamp
+          example: "2023-01-02T00:00:00Z"
+
     ApiResponse:
       type: object
       description: Standard API response following RFC 9457 Problem Details
@@ -691,6 +1056,12 @@ components:
                 $ref: "#/components/schemas/UsersOriginEnum"
             - $ref: "#/components/schemas/UsersOriginEnumCreateRequest"
             - $ref: "#/components/schemas/UsersOriginEnumUpdateRequest"
+            - $ref: "#/components/schemas/EmailCredentials"
+            - type: array
+              items:
+                $ref: "#/components/schemas/EmailCredentials"
+            - $ref: "#/components/schemas/EmailCredentialsCreateRequest"
+            - $ref: "#/components/schemas/EmailCredentialsUpdateRequest"
 
     ErrorResponse:
       type: object
@@ -827,3 +1198,5 @@ tags:
     description: User management operations
   - name: UsersOriginEnum
     description: Users origin enum management operations
+  - name: EmailCredentials
+    description: Email credentials management operations

@@ -4,6 +4,7 @@ import (
 	"go-hexagonal-fullstack-monorepo/cmd/api/router"
 	"go-hexagonal-fullstack-monorepo/internal/core/user"
 	"go-hexagonal-fullstack-monorepo/internal/core/users_origin_enum"
+	"go-hexagonal-fullstack-monorepo/internal/core/email_credentials"
 	"go-hexagonal-fullstack-monorepo/internal/shared/http/server"
 	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
 	"go-hexagonal-fullstack-monorepo/internal/shared/logger"
@@ -23,6 +24,7 @@ func Run() {
 		server.Module,
 		user.Module,
 		users_origin_enum.Module,
+		email_credentials.Module,
 		fx.Invoke(router.SetAPIRoutes),
 		// fx.NopLogger, // Disable fx's own logging to use our custom logger
 	)
