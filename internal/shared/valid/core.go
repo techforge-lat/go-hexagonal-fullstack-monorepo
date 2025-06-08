@@ -2,10 +2,13 @@ package valid
 
 import (
 	"reflect"
+
+	"github.com/google/uuid"
+	"gopkg.in/guregu/null.v4"
 )
 
 type Schema interface {
-	Parse(value interface{}) *Result
+	Parse(value any) *Result
 	Optional() Schema
 	Required() Schema
 	Custom(fn CustomValidatorFunc) Schema
@@ -13,7 +16,7 @@ type Schema interface {
 
 type Result struct {
 	Success bool
-	Data    interface{}
+	Data    any
 	Errors  []ValidationError
 }
 
@@ -23,11 +26,11 @@ type ValidationError struct {
 	Code    string
 }
 
-type CustomValidatorFunc func(value interface{}) error
+type CustomValidatorFunc func(value any) error
 
 type baseSchema struct {
-	optional       bool
-	required       bool
+	optional         bool
+	required         bool
 	customValidators []CustomValidatorFunc
 }
 
@@ -45,7 +48,7 @@ func (b *baseSchema) addCustom(fn CustomValidatorFunc) {
 	b.customValidators = append(b.customValidators, fn)
 }
 
-func (b *baseSchema) validateRequired(value interface{}, path string) []ValidationError {
+func (b *baseSchema) validateRequired(value any, path string) []ValidationError {
 	if b.required && isNilOrEmpty(value) {
 		return []ValidationError{{
 			Path:    path,
@@ -56,7 +59,7 @@ func (b *baseSchema) validateRequired(value interface{}, path string) []Validati
 	return nil
 }
 
-func (b *baseSchema) validateCustom(value interface{}, path string) []ValidationError {
+func (b *baseSchema) validateCustom(value any, path string) []ValidationError {
 	var errors []ValidationError
 	for _, validator := range b.customValidators {
 		if err := validator(value); err != nil {
@@ -70,11 +73,27 @@ func (b *baseSchema) validateCustom(value interface{}, path string) []Validation
 	return errors
 }
 
-func isNilOrEmpty(value interface{}) bool {
+func isNilOrEmpty(value any) bool {
 	if value == nil {
 		return true
 	}
-	
+
+	// Handle null library types
+	switch v := value.(type) {
+	case null.String:
+		return !v.Valid || v.String == ""
+	case null.Int:
+		return !v.Valid
+	case null.Float:
+		return !v.Valid
+	case null.Bool:
+		return !v.Valid
+	case null.Time:
+		return !v.Valid
+	case uuid.NullUUID:
+		return !v.Valid
+	}
+
 	v := reflect.ValueOf(value)
 	switch v.Kind() {
 	case reflect.String:
@@ -88,7 +107,7 @@ func isNilOrEmpty(value interface{}) bool {
 	}
 }
 
-func newResult(success bool, data interface{}, errors []ValidationError) *Result {
+func newResult(success bool, data any, errors []ValidationError) *Result {
 	return &Result{
 		Success: success,
 		Data:    data,

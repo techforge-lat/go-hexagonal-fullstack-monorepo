@@ -3,6 +3,9 @@ package valid
 import (
 	"encoding/json"
 	"reflect"
+
+	"github.com/google/uuid"
+	"gopkg.in/guregu/null.v4"
 )
 
 type ObjectSchema struct {
@@ -17,11 +20,11 @@ func Object(fields map[string]Schema) *ObjectSchema {
 	}
 }
 
-func (o *ObjectSchema) Parse(value interface{}) *Result {
+func (o *ObjectSchema) Parse(value any) *Result {
 	return o.parseWithPath(value, "")
 }
 
-func (o *ObjectSchema) parseWithPath(value interface{}, path string) *Result {
+func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
 	if o.optional && isNilOrEmpty(value) {
 		return newResult(true, value, nil)
 	}
@@ -44,7 +47,7 @@ func (o *ObjectSchema) parseWithPath(value interface{}, path string) *Result {
 	}
 
 	var allErrors []ValidationError
-	validatedData := make(map[string]interface{})
+	validatedData := make(map[string]any)
 
 	for fieldName, fieldSchema := range o.fields {
 		fieldValue, exists := data[fieldName]
@@ -141,7 +144,7 @@ func convertToMap(value interface{}) (map[string]interface{}, error) {
 func structToMap(value interface{}) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 	val := reflect.ValueOf(value)
-	
+
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
@@ -161,7 +164,7 @@ func structToMap(value interface{}) (map[string]interface{}, error) {
 
 		jsonTag := field.Tag.Get("json")
 		fieldName := field.Name
-		
+
 		if jsonTag != "" && jsonTag != "-" {
 			if commaIndex := len(jsonTag); commaIndex > 0 {
 				for j, r := range jsonTag {
@@ -174,8 +177,50 @@ func structToMap(value interface{}) (map[string]interface{}, error) {
 			}
 		}
 
-		result[fieldName] = fieldValue.Interface()
+		fieldVal := fieldValue.Interface()
+		// Extract primitive values from null types for validation
+		switch v := fieldVal.(type) {
+		case null.String:
+			if v.Valid {
+				result[fieldName] = v.String
+			} else {
+				result[fieldName] = nil
+			}
+		case null.Int:
+			if v.Valid {
+				result[fieldName] = v.Int64
+			} else {
+				result[fieldName] = nil
+			}
+		case null.Float:
+			if v.Valid {
+				result[fieldName] = v.Float64
+			} else {
+				result[fieldName] = nil
+			}
+		case null.Bool:
+			if v.Valid {
+				result[fieldName] = v.Bool
+			} else {
+				result[fieldName] = nil
+			}
+		case null.Time:
+			if v.Valid {
+				result[fieldName] = v.Time
+			} else {
+				result[fieldName] = nil
+			}
+		case uuid.NullUUID:
+			if v.Valid {
+				result[fieldName] = v.UUID
+			} else {
+				result[fieldName] = nil
+			}
+		default:
+			result[fieldName] = fieldVal
+		}
 	}
 
 	return result, nil
 }
+
