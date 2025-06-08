@@ -256,6 +256,98 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /users/exists:
+    head:
+      summary: Check if users exist
+      description: Checks if users exist based on the provided criteria
+      operationId: checkUsersExist
+      tags:
+        - Users
+      parameters:
+        - name: firstName
+          in: query
+          description: "Filter by firstName. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:John"
+        - name: lastName
+          in: query
+          description: "Filter by lastName. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:Doe"
+        - name: email
+          in: query
+          description: "Filter by email. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:john@example.com"
+      responses:
+        "200":
+          description: Users exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                exists:
+                  summary: Users found
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      exists: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users/count:
+    get:
+      summary: Count users
+      description: Returns the count of users based on the provided criteria
+      operationId: countUsers
+      tags:
+        - Users
+      parameters:
+        - name: firstName
+          in: query
+          description: "Filter by firstName. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:John"
+        - name: lastName
+          in: query
+          description: "Filter by lastName. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:Doe"
+        - name: origin
+          in: query
+          description: "Filter by origin. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:web_signup"
+      responses:
+        "200":
+          description: User count retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                count:
+                  summary: User count
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      count: 42
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /users-origin-enum:
     post:
       summary: Create a new users origin enum
@@ -455,6 +547,86 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users-origin-enum/exists:
+    head:
+      summary: Check if users origin enums exist
+      description: Checks if users origin enums exist based on the provided criteria
+      operationId: checkUsersOriginEnumsExist
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - name: code
+          in: query
+          description: "Filter by code. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:web_signup"
+        - name: name
+          in: query
+          description: "Filter by name. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "contains:Web"
+      responses:
+        "200":
+          description: Users origin enums exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                exists:
+                  summary: Users origin enums found
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      exists: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /users-origin-enum/count:
+    get:
+      summary: Count users origin enums
+      description: Returns the count of users origin enums based on the provided criteria
+      operationId: countUsersOriginEnums
+      tags:
+        - UsersOriginEnum
+      parameters:
+        - name: code
+          in: query
+          description: "Filter by code. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:web_signup"
+        - name: name
+          in: query
+          description: "Filter by name. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "contains:Web"
+      responses:
+        "200":
+          description: Users origin enum count retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                count:
+                  summary: Users origin enum count
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      count: 5
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -697,6 +869,98 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /email-credentials/exists:
+    head:
+      summary: Check if email credentials exist
+      description: Checks if email credentials exist based on the provided criteria
+      operationId: checkEmailCredentialsExist
+      tags:
+        - EmailCredentials
+      parameters:
+        - name: userId
+          in: query
+          description: "Filter by userId. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:456e7890-e89b-12d3-a456-426614174000"
+        - name: email
+          in: query
+          description: "Filter by email. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:user@example.com"
+        - name: isVerified
+          in: query
+          description: "Filter by isVerified. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:true"
+      responses:
+        "200":
+          description: Email credentials exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                exists:
+                  summary: Email credentials found
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      exists: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /email-credentials/count:
+    get:
+      summary: Count email credentials
+      description: Returns the count of email credentials based on the provided criteria
+      operationId: countEmailCredentials
+      tags:
+        - EmailCredentials
+      parameters:
+        - name: userId
+          in: query
+          description: "Filter by userId. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:456e7890-e89b-12d3-a456-426614174000"
+        - name: email
+          in: query
+          description: "Filter by email. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "contains:example.com"
+        - name: isVerified
+          in: query
+          description: "Filter by isVerified. Filter format: operator:value[:chaining]. Operators: eq, ne, gt, gte, lt, lte, like, in, nin, contains, ncontains, is, isn. Chaining: and (default), or."
+          schema:
+            type: string
+            example: "eq:true"
+      responses:
+        "200":
+          description: Email credentials count retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                count:
+                  summary: Email credentials count
+                  value:
+                    type: "about:blank"
+                    status: 200
+                    data:
+                      count: 15
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
 
