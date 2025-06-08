@@ -56,75 +56,19 @@ func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
 
 	for fieldName, fieldSchema := range o.fields {
 		fieldValue, exists := data[fieldName]
-		fieldPath := fieldName
-		if path != "" {
-			fieldPath = path + "." + fieldName
-		}
+		fieldPath := o.buildFieldPath(path, fieldName)
 
-		// Check if the original value in the struct is a null library type that is not valid
-		shouldSkipValidation := false
-		originalValue := reflect.ValueOf(value)
-		if originalValue.Kind() == reflect.Ptr {
-			originalValue = originalValue.Elem()
-		}
-		if originalValue.Kind() == reflect.Struct {
-			// Find struct field by JSON tag or field name
-			structType := originalValue.Type()
-			for i := 0; i < structType.NumField(); i++ {
-				field := structType.Field(i)
-				jsonTag := field.Tag.Get("json")
-				structFieldName := field.Name
-				
-				if jsonTag != "" && jsonTag != "-" {
-					if commaIndex := len(jsonTag); commaIndex > 0 {
-						for j, r := range jsonTag {
-							if r == ',' {
-								commaIndex = j
-								break
-							}
-						}
-						structFieldName = jsonTag[:commaIndex]
-					}
-				}
-				
-				if structFieldName == fieldName {
-					structFieldValue := originalValue.Field(i)
-					if structFieldValue.CanInterface() {
-						originalFieldValue := structFieldValue.Interface()
-						if isNullLibraryType(originalFieldValue) {
-							shouldSkipValidation = true
-						}
-					}
-					break
-				}
-			}
-		}
-		
-		if shouldSkipValidation {
+		if o.shouldSkipFieldValidation(value, fieldName) {
 			continue
 		}
 
-		var result *Result
-		if stringSchema, ok := fieldSchema.(*StringSchema); ok {
-			result = stringSchema.parseWithPath(fieldValue, fieldPath)
-		} else if numberSchema, ok := fieldSchema.(*NumberSchema); ok {
-			result = numberSchema.parseWithPath(fieldValue, fieldPath)
-		} else if objectSchema, ok := fieldSchema.(*ObjectSchema); ok {
-			result = objectSchema.parseWithPath(fieldValue, fieldPath)
-		} else if arraySchema, ok := fieldSchema.(*ArraySchema); ok {
-			result = arraySchema.parseWithPath(fieldValue, fieldPath)
-		} else {
-			result = fieldSchema.Parse(fieldValue)
-			if len(result.Errors) > 0 {
-				result.Errors = addPathPrefix(result.Errors, fieldPath)
-			}
-		}
+		result := o.validateField(fieldSchema, fieldValue, fieldPath)
 
 		if result.HasErrors() {
 			allErrors = append(allErrors, result.Errors...)
 			continue
 		}
-		
+
 		if exists || result.Data != nil {
 			validatedData[fieldName] = result.Data
 		}
@@ -137,6 +81,84 @@ func (o *ObjectSchema) parseWithPath(value any, path string) *Result {
 	}
 
 	return newResult(true, validatedData, nil)
+}
+
+func (o *ObjectSchema) buildFieldPath(path, fieldName string) string {
+	if path == "" {
+		return fieldName
+	}
+	return path + "." + fieldName
+}
+
+func (o *ObjectSchema) shouldSkipFieldValidation(value any, fieldName string) bool {
+	originalValue := reflect.ValueOf(value)
+	if originalValue.Kind() == reflect.Ptr {
+		originalValue = originalValue.Elem()
+	}
+
+	if originalValue.Kind() != reflect.Struct {
+		return false
+	}
+
+	return o.findStructFieldAndCheckNull(originalValue, fieldName)
+}
+
+func (o *ObjectSchema) findStructFieldAndCheckNull(originalValue reflect.Value, fieldName string) bool {
+	structType := originalValue.Type()
+
+	for i := range structType.NumField() {
+		field := structType.Field(i)
+		structFieldName := o.getFieldName(field)
+
+		if structFieldName != fieldName {
+			continue
+		}
+
+		structFieldValue := originalValue.Field(i)
+		if !structFieldValue.CanInterface() {
+			return false
+		}
+
+		originalFieldValue := structFieldValue.Interface()
+		return isNullLibraryType(originalFieldValue)
+	}
+
+	return false
+}
+
+func (o *ObjectSchema) getFieldName(field reflect.StructField) string {
+	jsonTag := field.Tag.Get("json")
+	if jsonTag == "" || jsonTag == "-" {
+		return field.Name
+	}
+
+	// Extract field name before comma
+	for i, r := range jsonTag {
+		if r == ',' {
+			return jsonTag[:i]
+		}
+	}
+
+	return jsonTag
+}
+
+func (o *ObjectSchema) validateField(fieldSchema Schema, fieldValue any, fieldPath string) *Result {
+	switch schema := fieldSchema.(type) {
+	case *StringSchema:
+		return schema.parseWithPath(fieldValue, fieldPath)
+	case *NumberSchema:
+		return schema.parseWithPath(fieldValue, fieldPath)
+	case *ObjectSchema:
+		return schema.parseWithPath(fieldValue, fieldPath)
+	case *ArraySchema:
+		return schema.parseWithPath(fieldValue, fieldPath)
+	default:
+		result := fieldSchema.Parse(fieldValue)
+		if len(result.Errors) > 0 {
+			result.Errors = addPathPrefix(result.Errors, fieldPath)
+		}
+		return result
+	}
 }
 
 func (o *ObjectSchema) Optional() Schema {
@@ -154,16 +176,16 @@ func (o *ObjectSchema) Custom(fn CustomValidatorFunc) Schema {
 	return o
 }
 
-func convertToMap(value interface{}) (map[string]interface{}, error) {
+func convertToMap(value any) (map[string]any, error) {
 	if value == nil {
 		return nil, nil
 	}
 
 	switch v := value.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return v, nil
 	case map[string]string:
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		for k, val := range v {
 			result[k] = val
 		}
@@ -186,14 +208,14 @@ func convertToMap(value interface{}) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		var result map[string]interface{}
+		var result map[string]any
 		err = json.Unmarshal(jsonBytes, &result)
 		return result, err
 	}
 }
 
-func structToMap(value interface{}) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
+func structToMap(value any) (map[string]any, error) {
+	result := make(map[string]any)
 	val := reflect.ValueOf(value)
 
 	if val.Kind() == reflect.Ptr {
@@ -205,7 +227,7 @@ func structToMap(value interface{}) (map[string]interface{}, error) {
 	}
 
 	typ := val.Type()
-	for i := 0; i < val.NumField(); i++ {
+	for i := range val.NumField() {
 		field := typ.Field(i)
 		fieldValue := val.Field(i)
 
@@ -213,65 +235,63 @@ func structToMap(value interface{}) (map[string]interface{}, error) {
 			continue
 		}
 
-		jsonTag := field.Tag.Get("json")
-		fieldName := field.Name
-
-		if jsonTag != "" && jsonTag != "-" {
-			if commaIndex := len(jsonTag); commaIndex > 0 {
-				for j, r := range jsonTag {
-					if r == ',' {
-						commaIndex = j
-						break
-					}
-				}
-				fieldName = jsonTag[:commaIndex]
-			}
-		}
-
+		fieldName := getJSONFieldName(field)
 		fieldVal := fieldValue.Interface()
-		// Extract primitive values from null types for validation
-		switch v := fieldVal.(type) {
-		case null.String:
-			if v.Valid {
-				result[fieldName] = v.String
-			} else {
-				result[fieldName] = nil
-			}
-		case null.Int:
-			if v.Valid {
-				result[fieldName] = v.Int64
-			} else {
-				result[fieldName] = nil
-			}
-		case null.Float:
-			if v.Valid {
-				result[fieldName] = v.Float64
-			} else {
-				result[fieldName] = nil
-			}
-		case null.Bool:
-			if v.Valid {
-				result[fieldName] = v.Bool
-			} else {
-				result[fieldName] = nil
-			}
-		case null.Time:
-			if v.Valid {
-				result[fieldName] = v.Time
-			} else {
-				result[fieldName] = nil
-			}
-		case uuid.NullUUID:
-			if v.Valid {
-				result[fieldName] = v.UUID
-			} else {
-				result[fieldName] = nil
-			}
-		default:
-			result[fieldName] = fieldVal
-		}
+		result[fieldName] = extractNullValue(fieldVal)
 	}
 
 	return result, nil
 }
 
+func getJSONFieldName(field reflect.StructField) string {
+	jsonTag := field.Tag.Get("json")
+	if jsonTag == "" || jsonTag == "-" {
+		return field.Name
+	}
+
+	// Extract field name before comma
+	for i, r := range jsonTag {
+		if r == ',' {
+			return jsonTag[:i]
+		}
+	}
+
+	return jsonTag
+}
+
+func extractNullValue(fieldVal any) any {
+	switch v := fieldVal.(type) {
+	case null.String:
+		if v.Valid {
+			return v.String
+		}
+		return nil
+	case null.Int:
+		if v.Valid {
+			return v.Int64
+		}
+		return nil
+	case null.Float:
+		if v.Valid {
+			return v.Float64
+		}
+		return nil
+	case null.Bool:
+		if v.Valid {
+			return v.Bool
+		}
+		return nil
+	case null.Time:
+		if v.Valid {
+			return v.Time
+		}
+		return nil
+	case uuid.NullUUID:
+		if v.Valid {
+			return v.UUID
+		}
+		return nil
+	default:
+		return fieldVal
+	}
+}
