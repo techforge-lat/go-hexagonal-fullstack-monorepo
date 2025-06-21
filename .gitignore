@@ -30,6 +30,9 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
-.claude
 .zed
+
+# Claude Code - keep commands but ignore cache/logs
+.claude/cache/
+.claude/logs/
 
