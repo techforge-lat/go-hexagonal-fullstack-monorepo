@@ -85,12 +85,38 @@ run-api:
 	@printf "$(ccyellow)Running API server...$(ccend)\n"
 	go run ./cmd/api
 
-run-cms:
-	@printf "$(ccyellow)Running CMS server...$(ccend)\n"
-	go run ./cmd/cms
+# Integration testing targets
+test-integration: test-integration-setup test-integration-health test-integration-cleanup
+	@printf "$(ccgreen)All integration tests completed!$(ccend)\n"
 
-run-wizard:
-	@printf "$(ccyellow)Running wizard...$(ccend)\n"
-	go run ./cmd/wizard
+test-integration-setup:
+	@printf "$(ccyellow)Setting up integration test environment...$(ccend)\n"
+	docker compose -f tests/docker/docker-compose.test.yaml up -d --build
+	@printf "$(ccyellow)Waiting for services to be ready...$(ccend)\n"
+	sleep 30
+	@printf "$(ccgreen)Integration test environment ready!$(ccend)\n"
 
-.PHONY: all fmt test test-cover vulnerability vet build tidy migration-create migration-up migration-down install-migrate create-logs setup run-api run-cms run-wizard
+test-integration-cleanup:
+	@printf "$(ccyellow)Cleaning up integration test environment...$(ccend)\n"
+	docker compose -f tests/docker/docker-compose.test.yaml down -v
+	docker image prune -f --filter label=com.docker.compose.project=tests
+	@printf "$(ccgreen)Integration test environment cleaned up!$(ccend)\n"
+
+test-integration-health:
+	@printf "$(ccyellow)Running health endpoint integration tests...$(ccend)\n"
+	go test -v ./tests/api/health/get -tags=integration
+	@printf "$(ccgreen)Health endpoint integration tests completed!$(ccend)\n"
+
+test-integration-all:
+	@printf "$(ccyellow)Running all integration tests...$(ccend)\n"
+	go test -v ./tests/... -tags=integration
+	@printf "$(ccgreen)All integration tests completed!$(ccend)\n"
+
+test-integration-watch:
+	@printf "$(ccyellow)Running integration tests in watch mode...$(ccend)\n"
+	while true; do \
+		inotifywait -r -e modify ./tests/ 2>/dev/null && \
+		make test-integration-health; \
+	done
+
+.PHONY: all fmt test test-cover test-integration test-integration-setup test-integration-cleanup test-integration-health test-integration-all test-integration-watch vulnerability vet build tidy migration-create migration-up migration-down install-migrate create-logs setup run-api run-cms run-wizard

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  test-database:
+    image: postgres:15-alpine
+    container_name: test-database
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    volumes:
+      - test_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - test-network
+
+  test-api:
+    build:
+      context: ../..
+      dockerfile: tests/docker/api/Dockerfile
+    container_name: test-api
+    environment:
+      # Database configuration
+      DB_ENGINE: postgres
+      DB_HOST: test-database
+      DB_PORT: 5432
+      DB_NAME: test_db
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+      DB_SSL_MODE: disable
+      
+      # HTTP configuration
+      HTTP_PORT: 8080
+      HTTP_ALLOWED_ORIGINS: "*"
+      HTTP_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+      
+      # OpenTelemetry configuration (disabled for tests)
+      OTEL_COLLECTOR_ENDPOINT: ""
+      OTEL_ENVIRONMENT: "test"
+      
+      # Logging configuration
+      LOG_LEVEL: "info"
+      LOG_FORMAT: "json"
+      
+      # JWT configuration
+      JWT_SECRET: "test-jwt-secret-key-for-integration-tests"
+    ports:
+      - "8081:8080"  # Use different port to avoid conflicts
+    depends_on:
+      test-database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test-network
+
+volumes:
+  test_database:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
