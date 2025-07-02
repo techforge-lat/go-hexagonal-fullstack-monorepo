@@ -4,122 +4,118 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Go hexagonal architecture monorepo using Go 1.24.3 with multiple applications (api, cms, wizard) sharing core business logic and infrastructure. The project uses Uber Fx for dependency injection and includes comprehensive observability tooling.
+This is a Go API backend using hexagonal architecture within a monorepo structure. The project implements a CRUD system with clean separation of concerns between domain logic, application use cases, and infrastructure.
 
 ## Architecture
 
-### Hexagonal Architecture Structure
+The codebase follows hexagonal (ports and adapters) architecture with clear layers:
 
-- `internal/core/`: Domain modules (e.g., `user/`) with application, domain, and infrastructure layers
-- `internal/shared/`: Shared infrastructure and utilities across all applications
-- `cmd/`: Application entry points using fx.New() for dependency injection
+- **Domain Layer**: Business entities and rules (`domain/entity/`)
+- **Application Layer**: Use cases and business logic (`application/`)
+- **Infrastructure Layer**: External adapters like HTTP handlers and database repositories (`infrastructure/`)
 
-### Key Dependencies
-
-- **Dependency Injection**: Uber Fx (`go.uber.org/fx`) - all modules export fx.Module
-- **HTTP Framework**: Echo (`github.com/labstack/echo/v4`) with OpenTelemetry instrumentation
-- **Database**: PostgreSQL with pgx driver (`github.com/jackc/pgx/v5`) and Scany for scanning
-- **Templates**: Templ (`github.com/a-h/templ`) for type-safe HTML templates
-- **Observability**: OpenTelemetry, Grafana stack (Loki, Tempo, Promtail)
-
-### Core Module Pattern
-
-Each domain module follows this structure:
-- `application/`: Use cases and business logic
-- `domain/`: Entities, commands, and queries
-- `infrastructure/presentation/`: HTTP handlers
-- `infrastructure/repository/`: Data persistence
-- `module.go`: Fx module definition with dependency wiring
-
-**IMPORTANT**: When creating new modules, always refer to `MODULE_CREATION_GUIDE.md` for detailed step-by-step instructions and architectural guidelines. This guide contains critical requirements for AI implementation and ensures strict adherence to the provided database schema.
+Each module is organized under `internal/core/{module_name}/` and follows a consistent structure defined in the MODULE_CREATION_GUIDE.md.
 
 ## Development Commands
 
-### Using Makefile (Recommended)
+### Basic Development
+- **Build**: `make build` or `go build ./...`
+- **Run API server**: `make run-api` or `go run ./cmd/api`
+- **Format code**: `make fmt` or `go fmt ./...`
+- **Run tests**: `make test` or `go test -race ./...`
+- **Test with coverage**: `make test-cover` or `go test -cover ./...`
 
-```bash
-# Complete development workflow
-make all                    # Format, test, lint, and build
+### Code Quality
+- **Lint and check**: `make all` (runs fmt, test, and build)
+- **Vulnerability check**: `make vulnerability`
+- **Vet code**: `make vet` or `go vet ./...`
+- **Tidy modules**: `make tidy` or `go mod tidy`
 
-# Individual tasks
-make fmt                    # Format code
-make test                   # Run tests with race detection
-make test-cover             # Run tests with coverage
-make vet                    # Run go vet
-make build                  # Build project
-make tidy                   # Tidy modules
-make vulnerability          # Check for vulnerabilities
+### Database Migrations
+- **Create migration**: `make migration-create name=migration_name`
+- **Run migrations up**: `make migration-up count=N` (or omit count for all)
+- **Run migrations down**: `make migration-down count=N`
 
-# Database migrations
-make migration-create name=migration_name
-make migration-up count=1
-make migration-down count=1
+### Integration Testing
+- **Run all integration tests**: `make test-integration`
+- **Run specific test**: `go test -v ./tests/api/health/get -tags=integration`
+- **Watch integration tests**: `make test-integration-watch`
 
-# Run applications
-make run-api               # Start API server
-make run-cms               # Start CMS server
-make run-wizard           # Start wizard application
+### Setup
+- **Initial setup**: `make setup` (installs migrate tool and creates log directories)
+- **Install migrate tool**: `make install-migrate`
 
-# Setup
-make setup                # Install tools and create directories
+## Key Technologies
+
+- **Framework**: Echo (HTTP framework)
+- **Database**: PostgreSQL with pgx driver
+- **Dependency Injection**: Uber Fx
+- **Query Builder**: Custom SQLCraft system
+- **Validation**: Custom validation system
+- **Telemetry**: OpenTelemetry with Grafana stack
+- **Testing**: Testcontainers for integration tests
+
+## Module Structure
+
+Every CRUD module follows this exact structure:
+```
+internal/core/{module_name}/
+├── application/usecase.go           # Business logic
+├── domain/entity/
+│   ├── command.go                   # Create/Update/Delete request types
+│   └── query.go                     # Read response types
+├── infrastructure/
+│   ├── presentation/handler.go      # HTTP handlers
+│   └── repository/postgres/
+│       ├── psql.go                 # Repository implementation
+│       └── query.go                # SQL queries and mappings
+└── module.go                       # Fx module configuration
 ```
 
-### Direct Go Commands
+## Adding New Modules
 
-```bash
-# Run specific tests
-go test ./internal/shared/fault/
-go test -run TestSpecificFunction ./internal/core/user/
+1. Use the `/module` slash command or follow MODULE_CREATION_GUIDE.md exactly
+2. **CRITICAL**: Only implement fields that exist in the provided database schema - never add audit fields unless explicitly present
+3. Update `internal/shared/ports/{module_name}.go` with interfaces
+4. Add module to `cmd/api/runner.go` imports and fx.New()
+5. Create routes in `cmd/api/router/{module_name}_routes.go`
+6. Create database migration with `make migration-create name=create_{table_name}_table`
 
-# Run applications directly
-go run ./cmd/api
-go run ./cmd/cms
-```
+## Database Query System (DAFI)
 
-## Custom Packages
+The project uses DAFI (Data Access and Filtering Interface) for standardized querying:
+- **Filtering**: `?field=operator:value` (e.g., `?name=eq:John` or `?age=gte:18`)
+- **Sorting**: `?field=sort:direction` (e.g., `?name=sort:asc`)
+- **Pagination**: `?page=1&pageSize=10`
+- **Field selection**: `?select=field1,field2`
 
-### DAFI (Data Access and Filtering Interface)
+## Key Files and Directories
 
-Location: `internal/shared/dafi/`
-- Fluent query builder for filtering, sorting, and pagination
-- Usage: `dafi.Where("name", dafi.Equals, "John").SortBy("created_at", dafi.DESC).Limit(10)`
+- `cmd/api/main.go` & `cmd/api/runner.go`: Application entry point and configuration
+- `internal/shared/`: Shared utilities, database connections, HTTP server
+- `internal/core/`: Business modules following hexagonal architecture
+- `database/migrations/`: Database schema migrations
+- `tests/`: Integration tests using testcontainers
+- `devops/`: Grafana, Tempo, Loki configuration for observability
 
-### SQLCraft
+## Development Environment
 
-Location: `internal/shared/sqlcraft/`
-- SQL query builder with type safety
-- Supports SELECT, INSERT, UPDATE, DELETE operations
+- **Local database**: `docker compose up database pgadmin`
+- **Full observability stack**: `docker compose up`
+- **Environment**: Copy `.env.example` to `.env` and configure
+- **Database URL format**: `postgres://user:password@host:port/dbname?sslmode=disable`
 
-### Fault Package
+## Testing
 
-Location: `internal/shared/fault/`
-- Enhanced error handling with caller tracing
-- HTTP status code mapping
-- Error chaining with metadata
+- **Unit tests**: Standard Go tests in each module
+- **Integration tests**: Use testcontainers, run with `-tags=integration`
+- **Test database**: Automatically managed by testcontainers
+- **Coverage**: Use `make test-cover` for coverage reports
 
-## Infrastructure Services
+## Important Patterns
 
-### Database Setup
-
-```bash
-# Start PostgreSQL and pgAdmin
-docker-compose up database pgadmin
-
-# Run migrations
-make migration-up
-```
-
-### Observability Stack
-
-```bash
-# Start full observability stack
-docker-compose up grafana tempo loki promtail collector
-
-# Access services
-# Grafana: http://localhost:3000
-# pgAdmin: http://localhost:8888
-```
-
-## Git
-
-- Always use conventional commits (see [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/))
+1. **Error Handling**: Use the `fault` package for consistent error wrapping
+2. **Validation**: Define schemas in `command.go` using the shared validation system
+3. **Repository Pattern**: Implement WithTx for transaction support
+4. **HTTP Responses**: Use the shared response package for consistent API responses
+5. **Dependency Injection**: All dependencies are wired through Uber Fx modules
