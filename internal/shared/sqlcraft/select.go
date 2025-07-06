@@ -2,8 +2,8 @@ package sqlcraft
 
 import (
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/dafi"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
 	"strconv"
 	"strings"
 )

@@ -3,7 +3,7 @@ package sqlcraft
 import (
 	"strings"
 
-	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
+	"api.system.soluciones-cloud.com/internal/shared/dafi"
 )
 
 type DeleteQuery struct {

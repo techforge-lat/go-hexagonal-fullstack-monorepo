@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

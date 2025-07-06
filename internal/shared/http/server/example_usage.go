@@ -1,9 +1,9 @@
 package server
 
 import (
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
-	"go-hexagonal-fullstack-monorepo/internal/shared/logger"
-	"go-hexagonal-fullstack-monorepo/internal/shared/repository/postgres"
+	"api.system.soluciones-cloud.com/internal/shared/localconfig"
+	"api.system.soluciones-cloud.com/internal/shared/logger"
+	"api.system.soluciones-cloud.com/internal/shared/repository/postgres"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"

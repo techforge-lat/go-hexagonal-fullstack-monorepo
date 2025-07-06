@@ -2,8 +2,8 @@ package ports
 
 import (
 	"context"
-	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-	"go-hexagonal-fullstack-monorepo/internal/shared/types"
+	"api.system.soluciones-cloud.com/internal/shared/dafi"
+	"api.system.soluciones-cloud.com/internal/shared/types"
 )
 
 // UseCaseTx defines a generic interface for usecases that support transactions.

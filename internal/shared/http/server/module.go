@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
-	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/middleware"
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
-	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
-	"go-hexagonal-fullstack-monorepo/internal/shared/telemetry"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/http/server/middleware"
+	"api.system.soluciones-cloud.com/internal/shared/localconfig"
+	"api.system.soluciones-cloud.com/internal/shared/ports"
+	"api.system.soluciones-cloud.com/internal/shared/telemetry"
 	"net/http"
 	"time"
 

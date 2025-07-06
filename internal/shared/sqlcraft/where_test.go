@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
+	"api.system.soluciones-cloud.com/internal/shared/dafi"
 )
 
 func TestWhere(t *testing.T) {

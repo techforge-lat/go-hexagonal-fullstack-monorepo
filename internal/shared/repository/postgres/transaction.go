@@ -36,8 +36,8 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
-	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/ports"
 )
 
 // PostgresTransaction represents a PostgreSQL database transaction wrapper

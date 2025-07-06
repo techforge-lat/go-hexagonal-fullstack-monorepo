@@ -2,7 +2,7 @@ package response
 
 import (
 	"errors"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"

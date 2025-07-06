@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-hexagonal-fullstack-monorepo/internal/shared/dafi"
+	"api.system.soluciones-cloud.com/internal/shared/dafi"
 )
 
 type UpdateQuery struct {

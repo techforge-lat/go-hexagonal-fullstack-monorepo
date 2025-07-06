@@ -95,7 +95,7 @@ type {ModuleName} struct {
 package entity
 
 import (
-    "go-hexagonal-fullstack-monorepo/internal/shared/valid"
+    "api.system.soluciones-cloud.com/internal/shared/valid"
     // Import only what's needed based on the actual schema fields
     // "github.com/google/uuid" - only if UUID fields exist in schema
     // "gopkg.in/guregu/null.v4" - only if nullable fields exist in schema
@@ -166,11 +166,11 @@ package application
 
 import (
     "context"
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/domain/entity"
-    "go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-    "go-hexagonal-fullstack-monorepo/internal/shared/fault"
-    "go-hexagonal-fullstack-monorepo/internal/shared/ports"
-    "go-hexagonal-fullstack-monorepo/internal/shared/types"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/domain/entity"
+    "api.system.soluciones-cloud.com/internal/shared/dafi"
+    "api.system.soluciones-cloud.com/internal/shared/fault"
+    "api.system.soluciones-cloud.com/internal/shared/ports"
+    "api.system.soluciones-cloud.com/internal/shared/types"
 )
 
 type UseCase struct {
@@ -257,7 +257,7 @@ func (u UseCase) Count(ctx context.Context, criteria dafi.Criteria) (int64, erro
 ```go
 package postgres
 
-import "go-hexagonal-fullstack-monorepo/internal/shared/sqlcraft"
+import "api.system.soluciones-cloud.com/internal/shared/sqlcraft"
 
 var table = "schema.{table_name}"
 
@@ -293,12 +293,12 @@ package postgres
 
 import (
     "context"
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/domain/entity"
-    "go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-    "go-hexagonal-fullstack-monorepo/internal/shared/fault"
-    "go-hexagonal-fullstack-monorepo/internal/shared/ports"
-    "go-hexagonal-fullstack-monorepo/internal/shared/sqlcraft"
-    "go-hexagonal-fullstack-monorepo/internal/shared/types"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/domain/entity"
+    "api.system.soluciones-cloud.com/internal/shared/dafi"
+    "api.system.soluciones-cloud.com/internal/shared/fault"
+    "api.system.soluciones-cloud.com/internal/shared/ports"
+    "api.system.soluciones-cloud.com/internal/shared/sqlcraft"
+    "api.system.soluciones-cloud.com/internal/shared/types"
     "time"
 
     "github.com/georgysavva/scany/v2/pgxscan"
@@ -557,12 +557,12 @@ func (r Repository) conn() ports.DatabaseExecutor {
 package presentation
 
 import (
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/domain/entity"
-    "go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-    "go-hexagonal-fullstack-monorepo/internal/shared/fault"
-    "go-hexagonal-fullstack-monorepo/internal/shared/http/server/request"
-    "go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
-    "go-hexagonal-fullstack-monorepo/internal/shared/ports"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/domain/entity"
+    "api.system.soluciones-cloud.com/internal/shared/dafi"
+    "api.system.soluciones-cloud.com/internal/shared/fault"
+    "api.system.soluciones-cloud.com/internal/shared/http/server/request"
+    "api.system.soluciones-cloud.com/internal/shared/http/server/response"
+    "api.system.soluciones-cloud.com/internal/shared/ports"
     "net/http"
 
     "github.com/labstack/echo/v4"
@@ -685,10 +685,10 @@ func (h Handler) Count(c echo.Context) error {
 package {module_name}
 
 import (
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/application"
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/infrastructure/presentation"
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/infrastructure/repository/postgres"
-    "go-hexagonal-fullstack-monorepo/internal/shared/ports"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/application"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/infrastructure/presentation"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/infrastructure/repository/postgres"
+    "api.system.soluciones-cloud.com/internal/shared/ports"
 
     "go.uber.org/fx"
 )
@@ -718,9 +718,9 @@ package ports
 
 import (
     "context"
-    "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/domain/entity"
-    "go-hexagonal-fullstack-monorepo/internal/shared/dafi"
-    "go-hexagonal-fullstack-monorepo/internal/shared/types"
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/domain/entity"
+    "api.system.soluciones-cloud.com/internal/shared/dafi"
+    "api.system.soluciones-cloud.com/internal/shared/types"
 )
 
 type {ModuleName}Repository interface {
@@ -782,7 +782,7 @@ Add routes to your application router:
 package router
 
 import (
-    "{module_name}Handler" "go-hexagonal-fullstack-monorepo/internal/core/{module_name}/infrastructure/presentation"
+    "{module_name}Handler" "api.system.soluciones-cloud.com/internal/core/{module_name}/infrastructure/presentation"
     "github.com/labstack/echo/v4"
 )
 

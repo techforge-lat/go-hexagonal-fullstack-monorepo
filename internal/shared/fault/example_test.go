@@ -2,7 +2,7 @@ package fault_test
 
 import (
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
 )
 
 func ExampleWrap() {

@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"errors"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
-	"go-hexagonal-fullstack-monorepo/internal/shared/http/server/response"
-	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/http/server/response"
+	"api.system.soluciones-cloud.com/internal/shared/ports"
 
 	"github.com/labstack/echo/v4"
 )

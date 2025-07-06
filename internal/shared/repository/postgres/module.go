@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
-	"go-hexagonal-fullstack-monorepo/internal/shared/ports"
+	"api.system.soluciones-cloud.com/internal/shared/localconfig"
+	"api.system.soluciones-cloud.com/internal/shared/ports"
 
 	"go.uber.org/fx"
 )

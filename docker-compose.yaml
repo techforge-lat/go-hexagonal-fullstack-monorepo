@@ -1,7 +1,7 @@
 services:
   database:
     image: postgres:latest
-    container_name: go-hexagonal-fullstack-monorepo_database
+    container_name: api.system.soluciones-cloud.com_database
     restart: always
     ports:
       - "5432:5432"
@@ -13,7 +13,7 @@ services:
       - ./database/seed/create_database.sql:/docker-entrypoint-initdb.d/create_database.sql
   pgadmin:
     image: dpage/pgadmin4
-    container_name: go-hexagonal-fullstack-monorepo_pgadmin
+    container_name: api.system.soluciones-cloud.com_pgadmin
     restart: always
     ports:
       - "8888:80"
@@ -24,7 +24,7 @@ services:
       - pgadmin:/var/lib/pgadmin
   collector:
     image: otel/opentelemetry-collector-contrib:0.81.0
-    container_name: go-hexagonal-fullstack-monorepo_collector
+    container_name: api.system.soluciones-cloud.com_collector
     restart: always
     command: ["--config=/etc/collector.yaml"]
     ports:
@@ -36,14 +36,14 @@ services:
       - tempo
   tempo:
     image: grafana/tempo:latest
-    container_name: go-hexagonal-fullstack-monorepo_tempo
+    container_name: api.system.soluciones-cloud.com_tempo
     restart: always
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
       - ./devops/tempo/tempo.yaml:/etc/tempo.yaml
   grafana:
     image: grafana/grafana:latest
-    container_name: go-hexagonal-fullstack-monorepo_grafana
+    container_name: api.system.soluciones-cloud.com_grafana
     restart: always
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
@@ -58,7 +58,7 @@ services:
       - loki
   loki:
     image: grafana/loki:latest
-    container_name: go-hexagonal-fullstack-monorepo_loki
+    container_name: api.system.soluciones-cloud.com_loki
     restart: always
     ports:
       - "3100:3100"
@@ -69,7 +69,7 @@ services:
 
   promtail:
     image: grafana/promtail:latest
-    container_name: go-hexagonal-fullstack-monorepo_promtail
+    container_name: api.system.soluciones-cloud.com_promtail
     restart: always
     volumes:
       - ./devops/promtail/config.yaml:/etc/promtail/config.yaml

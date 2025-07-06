@@ -2,7 +2,7 @@ package logger
 
 import (
 	"context"
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+	"api.system.soluciones-cloud.com/internal/shared/localconfig"
 	"io"
 	"log/slog"
 	"os"

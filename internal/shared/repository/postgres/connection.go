@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"go-hexagonal-fullstack-monorepo/internal/shared/fault"
-	"go-hexagonal-fullstack-monorepo/internal/shared/localconfig"
+	"api.system.soluciones-cloud.com/internal/shared/fault"
+	"api.system.soluciones-cloud.com/internal/shared/localconfig"
 
 	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"

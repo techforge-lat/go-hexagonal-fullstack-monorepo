@@ -5,7 +5,7 @@ package get
 import (
 	"testing"
 
-	"go-hexagonal-fullstack-monorepo/tests/shared"
+	"api.system.soluciones-cloud.com/tests/shared"
 
 	"github.com/stretchr/testify/suite"
 )
