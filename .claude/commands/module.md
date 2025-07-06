@@ -42,30 +42,54 @@ internal/core/{module_name}/
 │   └── query.go
 ├── infrastructure/
 │   ├── presentation/handler.go
-│   └── repository/postgres/
-│       ├── psql.go
-│       └── query.go
+│   └── repository/
+│       └── postgres.go
 └── module.go
 ```
 
 ### Additional Files
-- Database migration files in `database/migrations/`
-- Port interfaces in `internal/shared/ports/`
-- Route registration file in `cmd/api/router/`
-- OpenAPI documentation updates
+- Port interfaces in `internal/shared/ports/{module_name}.go`
+- Route registration file in `cmd/api/router/{module_name}_routes.go`
 
 ### Key Features
-- Full CRUD operations (Create, Read, Update, Delete, List, Exists, Count)
-- DAFI query support for filtering, sorting, pagination
+- Full CRUD operations using standard repository patterns
+- DAFI system integration for filtering, sorting, pagination
 - Proper validation using the shared validation package
 - Error handling with the fault package
-- Transaction support
+- Transaction support via RepositoryTx interface
 - Smart delete handling:
   - Soft delete functionality (if `deleted_at`/`deleted_by` columns present)
   - Hard delete functionality (if no soft delete columns)
 - OpenAPI 3 documentation
 - Echo framework integration
 - Uber Fx dependency injection
+
+### CRITICAL ARCHITECTURE REQUIREMENTS
+
+**Repository Pattern:**
+- MUST implement `RepositoryTx[T]`, `RepositoryCommand[C, U]`, and `RepositoryQuery[M]` interfaces
+- MUST use `ports.Database` and `ports.Transaction` interfaces
+- MUST use DAFI `dafi.Criteria` for all query operations
+- NO custom query structs with pointers
+- NO direct SQL query building outside of repository implementation
+
+**Entity Design:**
+- NEVER add decimal imports unless table actually has decimal/numeric columns
+- Use `time.Time` for all timestamp/date fields
+- Use `null.String`, `null.Time`, etc. for nullable fields
+- NO custom response wrapper structs - use `types.List[T]` directly
+
+**Use Case Layer:**
+- MUST return entities by value, not pointers (`entity.User`, not `*entity.User`)
+- MUST use `dafi.Criteria` for all query operations
+- Return `types.List[entity.T]` for list operations
+- Return `int64` for count operations
+
+**Handler Layer:**
+- MUST use DAFI system for query parameter parsing
+- Build `dafi.Criteria` objects from HTTP query parameters
+- Use `dafi.Equal`, `dafi.Like`, etc. for filter operations
+- Use `dafi.Asc`/`dafi.Desc` for sorting
 
 ## Implementation
 
@@ -208,26 +232,28 @@ function toGoType(fieldType, params, isNullable = false) {
         'boolean': 'bool',
         'uuid': 'uuid.UUID',
         'timestamp': 'time.Time',
-        'date': 'time.Time',
-        'decimal': 'decimal.Decimal'
+        'date': 'time.Time'
+        // NEVER include decimal unless table actually has decimal/numeric columns
     };
     
     let goType = typeMap[fieldType];
     if (!goType) {
-        throw new Error(`Unsupported field type: ${fieldType}`);
+        // Default to string for unknown types to avoid import issues
+        console.warn(`⚠️  Unknown field type '${fieldType}', defaulting to string`);
+        goType = 'string';
     }
     
     if (isNullable) {
         const nullTypeMap = {
             'string': 'null.String',
             'int': 'null.Int',
-            'int64': 'null.Int',
+            'int64': 'null.Int64',
             'bool': 'null.Bool',
             'uuid.UUID': 'uuid.NullUUID',
-            'time.Time': 'null.Time',
-            'decimal.Decimal': 'decimal.NullDecimal'
+            'time.Time': 'null.Time'
+            // NEVER include decimal unless table actually has decimal/numeric columns
         };
-        return nullTypeMap[goType] || `null.${goType}`;
+        return nullTypeMap[goType] || `null.String`; // Safe fallback
     }
     
     return goType;
@@ -326,6 +352,12 @@ fields.forEach(f => {
 console.log(`🗑️  Delete strategy: ${hasSoftDelete ? 'Soft delete (with DeleteRequest struct)' : 'Hard delete (direct removal)'}`);
 console.log(`\n🔧 Generating complete module structure for '${moduleName}'...`);
 
+// TODO: After generating all module files, also complete these CRITICAL steps:
+// 1. Update cmd/api/runner.go to add the module to fx.New() 
+// 2. Update cmd/api/router/routes.go to register the module routes
+// 3. Update RouterParams struct to include the module handler
+// Without these steps, the module will not be accessible via HTTP endpoints
+
 // Note: In the actual implementation, use hasSoftDelete to conditionally generate DeleteRequest struct
 })().catch(console.error);
 ```
@@ -343,14 +375,87 @@ The command uses the PostgreSQL MCP integration for database access. Ensure the 
 
 ## Post-Generation Steps
 
-After generation, you should:
+After generation, you MUST complete these steps:
+
+### 1. Add Module to Dependency Injection
+Update `cmd/api/runner.go` to include the new module:
+
+```go
+import (
+    "api.system.soluciones-cloud.com/internal/core/{module_name}"
+    // ... other imports
+)
+
+func Run() {
+    app := fx.New(
+        localconfig.Module,
+        logger.Module,
+        postgres.Module,
+        {module_name}.Module,  // Add this line
+        server.Module,
+        fx.Invoke(router.SetAPIRoutes),
+    )
+}
+```
+
+### 2. Register Routes in Router
+Update `cmd/api/router/routes.go` to register the module routes:
+
+```go
+import (
+    "api.system.soluciones-cloud.com/internal/core/{module_name}/infrastructure/presentation"
+    // ... other imports
+)
+
+type RouterParams struct {
+    fx.In
+    {ModuleName}Handler *presentation.{ModuleName}Handler  // Add this line
+}
+
+func SetAPIRoutes(echoServer *server.EchoServer, params RouterParams) error {
+    // Register {module_name} routes
+    Register{ModuleName}Routes(echoServer.PublicAPI, params.{ModuleName}Handler)
+    
+    return nil
+}
+```
+
+### 3. Update OpenAPI Documentation
+Update `cmd/api/docs/openapi.yaml` to include the new module endpoints:
+
+```yaml
+paths:
+  /api/v1/{module_name}:
+    # Add all CRUD endpoints (POST, GET)
+  /api/v1/{module_name}/count:
+    # Add count endpoint
+  /api/v1/{module_name}/{id}:
+    # Add single resource endpoints (GET, PUT, DELETE)
+  /api/v1/{module_name}/{id}/exists:
+    # Add exists endpoint
+
+components:
+  schemas:
+    {ModuleName}:
+      # Add main entity schema
+    Create{ModuleName}Request:
+      # Add create request schema
+    Update{ModuleName}Request:
+      # Add update request schema
+    Delete{ModuleName}Request:
+      # Add delete request schema (only for soft delete)
+```
+
+### 4. Verification Steps
 1. Run `make test` to ensure all tests pass  
 2. Run `make build` to verify compilation
-3. Add the module to your application's dependency injection in `cmd/api/main.go`
-4. Register routes in `cmd/api/router/routes.go`
+3. Run `make run-api` to test server startup
+4. Test API endpoints with curl or Postman
 5. Update any custom business logic in use cases
 6. Add any additional validation rules
-7. Update OpenAPI documentation if needed
+7. Verify OpenAPI documentation is accessible at `/api/v1/docs`
+
+**CRITICAL**: The module will not work until steps 1 and 2 are completed. The generated routes file (`cmd/api/router/{module_name}_routes.go`) is only a helper - the actual registration must be done in the main `routes.go` file.
 
 ## Supported PostgreSQL Types
 

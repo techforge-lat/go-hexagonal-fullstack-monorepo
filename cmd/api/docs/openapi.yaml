@@ -15,10 +15,436 @@ servers:
     description: Development server
 
 paths:
-  # No API endpoints defined yet - ready for new modules
+  /api/v1/users:
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Create a new user with the provided information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    
+    get:
+      tags:
+        - users
+      summary: List users
+      description: List users with optional filtering, sorting, and pagination
+      parameters:
+        - name: origin
+          in: query
+          description: Filter by origin
+          schema:
+            type: string
+            example: "SYSTEM"
+        - name: first_name
+          in: query
+          description: Filter by first name (partial match)
+          schema:
+            type: string
+            example: "John"
+        - name: last_name
+          in: query
+          description: Filter by last name (partial match)
+          schema:
+            type: string
+            example: "Doe"
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+            example: true
+        - name: page
+          in: query
+          description: Page number (default 1)
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+        - name: page_size
+          in: query
+          description: Page size (default 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            example: 10
+        - name: sort_by
+          in: query
+          description: Sort by field
+          schema:
+            type: string
+            enum: [id, origin, first_name, last_name, is_active, created_at, updated_at]
+            example: "created_at"
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            example: "desc"
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/count:
+    get:
+      tags:
+        - users
+      summary: Count users
+      description: Count users with optional filtering
+      parameters:
+        - name: origin
+          in: query
+          description: Filter by origin
+          schema:
+            type: string
+        - name: first_name
+          in: query
+          description: Filter by first name (partial match)
+          schema:
+            type: string
+        - name: last_name
+          in: query
+          description: Filter by last name (partial match)
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Users counted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 42
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/{id}:
+    get:
+      tags:
+        - users
+      summary: Get user by ID
+      description: Get a user by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    
+    put:
+      tags:
+        - users
+      summary: Update user
+      description: Update an existing user with the provided information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: Soft delete a user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteUserRequest'
+      responses:
+        '204':
+          description: User deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/{id}/exists:
+    get:
+      tags:
+        - users
+      summary: Check if user exists
+      description: Check if a user exists by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User existence checked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 components:
   schemas:
+    User:
+      type: object
+      description: User entity
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        origin:
+          type: string
+          description: User origin system
+          example: "SYSTEM"
+          maxLength: 50
+        first_name:
+          type: string
+          description: User first name
+          example: "John"
+          maxLength: 100
+        last_name:
+          type: string
+          nullable: true
+          description: User last name
+          example: "Doe"
+          maxLength: 100
+        picture:
+          type: string
+          nullable: true
+          description: URL to user profile picture
+          example: "https://example.com/avatar.jpg"
+        is_active:
+          type: boolean
+          description: Whether the user is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: User creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of user who created this user
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: User last update timestamp
+          example: "2024-01-15T15:45:00Z"
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of user who last updated this user
+          example: "123e4567-e89b-12d3-a456-426614174002"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: User deletion timestamp (soft delete)
+          example: null
+        deleted_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of user who deleted this user
+          example: null
+      required:
+        - id
+        - origin
+        - first_name
+        - is_active
+        - created_at
+
+    CreateUserRequest:
+      type: object
+      description: Request to create a new user
+      properties:
+        origin:
+          type: string
+          description: User origin system
+          example: "SYSTEM"
+          maxLength: 50
+        first_name:
+          type: string
+          description: User first name
+          example: "John"
+          maxLength: 100
+        last_name:
+          type: string
+          description: User last name (optional)
+          example: "Doe"
+          maxLength: 100
+        picture:
+          type: string
+          description: URL to user profile picture (optional)
+          example: "https://example.com/avatar.jpg"
+        is_active:
+          type: boolean
+          description: Whether the user should be active
+          example: true
+        created_by:
+          type: string
+          format: uuid
+          description: ID of user creating this user (optional)
+          example: "123e4567-e89b-12d3-a456-426614174001"
+      required:
+        - origin
+        - first_name
+        - is_active
+
+    UpdateUserRequest:
+      type: object
+      description: Request to update an existing user
+      properties:
+        origin:
+          type: string
+          description: User origin system (optional)
+          example: "SYSTEM"
+          maxLength: 50
+        first_name:
+          type: string
+          description: User first name (optional)
+          example: "John"
+          maxLength: 100
+        last_name:
+          type: string
+          nullable: true
+          description: User last name (optional)
+          example: "Doe"
+          maxLength: 100
+        picture:
+          type: string
+          nullable: true
+          description: URL to user profile picture (optional)
+          example: "https://example.com/avatar.jpg"
+        is_active:
+          type: boolean
+          description: Whether the user should be active (optional)
+          example: true
+        updated_by:
+          type: string
+          format: uuid
+          description: ID of user updating this user (optional)
+          example: "123e4567-e89b-12d3-a456-426614174002"
+
+    DeleteUserRequest:
+      type: object
+      description: Request to delete a user (soft delete)
+      properties:
+        deleted_by:
+          type: string
+          format: uuid
+          description: ID of user performing the deletion
+          example: "123e4567-e89b-12d3-a456-426614174003"
+      required:
+        - deleted_by
+
     ApiResponse:
       type: object
       description: Standard API response following RFC 9457 Problem Details

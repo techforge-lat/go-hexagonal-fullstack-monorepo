@@ -2,6 +2,7 @@ package main
 
 import (
 	"api.system.soluciones-cloud.com/cmd/api/router"
+	"api.system.soluciones-cloud.com/internal/core/users"
 	"api.system.soluciones-cloud.com/internal/shared/http/server"
 	"api.system.soluciones-cloud.com/internal/shared/localconfig"
 	"api.system.soluciones-cloud.com/internal/shared/logger"
@@ -18,6 +19,7 @@ func Run() {
 		localconfig.Module,
 		logger.Module,
 		postgres.Module,
+		users.Module,
 		server.Module,
 		fx.Invoke(router.SetAPIRoutes),
 		// fx.NopLogger, // Disable fx's own logging to use our custom logger
